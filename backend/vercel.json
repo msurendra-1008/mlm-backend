@@ -21,8 +21,8 @@
     "routes": [
         
         {
-            "src": "/",
-            "dest": "backend/backend/wsgi.py"
+            "src": "",
+            "dest": "backend/backend/urls.py"
         }
     ]
 }
