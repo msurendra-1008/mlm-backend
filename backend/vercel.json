@@ -21,9 +21,17 @@
     "routes": [
         
         {
-            "src": "",
-            "dest": "backend/backend/urls.py"
-        }
+            "src": "/static/(.*)",
+            "dest": "/static/$1"
+          },
+          {
+            "src": "/api/(.*)", 
+            "dest": "backend/backend/wsgi.py"
+          },
+          {
+            "src": "/(.*)", 
+            "dest": "backend/backend/wsgi.py"
+          }
     ]
 }
 
