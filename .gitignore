@@ -1,3 +1,4 @@
 mlm-backend-env
 *.pyc
 "rewrites": [{ "source": "/(.*)", "destination": "backend/api" }]
+.env
