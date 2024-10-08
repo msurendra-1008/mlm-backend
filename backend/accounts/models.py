@@ -58,3 +58,45 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.mobile
     
+
+
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+class LegCategory(models.TextChoices):
+    GENERAL = 'GEN', _('General')
+    BPL = 'BPL', _('BPL')
+    HANDICAP = 'HAN', _('Handicap')
+
+class LegIncomeModel(models.Model):
+    leg1 = models.CharField(
+        max_length=3,
+        choices=LegCategory.choices,
+        default=LegCategory.GENERAL,
+        verbose_name=_('Leg 1 Category')
+    )
+    leg2 = models.CharField(
+        max_length=3,
+        choices=LegCategory.choices,
+        default=LegCategory.GENERAL,
+        verbose_name=_('Leg 2 Category')
+    )
+    leg3 = models.CharField(
+        max_length=3,
+        choices=LegCategory.choices,
+        default=LegCategory.GENERAL,
+        verbose_name=_('Leg 3 Category')
+    )
+    income = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_('Income')
+    )
+
+    def __str__(self):
+        return f"Leg Income Model - {self.id}"
+
+    class Meta:
+        verbose_name = _('Leg Income Model')
+        verbose_name_plural = _('Leg Income Models')
+
