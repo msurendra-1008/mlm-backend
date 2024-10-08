@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import CustomUser
+from .models import CustomUser, LegIncomeModel
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -42,3 +42,9 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
         data['user'] = user
         return data
+    
+
+class LegIncomeModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LegIncomeModel
+        fields = ['id', 'leg1', 'leg2', 'leg3', 'income']

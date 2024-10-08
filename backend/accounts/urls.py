@@ -2,7 +2,7 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .viewset import UserViewSet, PublicViewSet
+from .viewset import LegIncomeModelViewSet, UserViewSet, PublicViewSet
 from .helpers import ProtectedView, PublicView
 
 
@@ -10,8 +10,7 @@ from .helpers import ProtectedView, PublicView
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'public', PublicViewSet, basename='public')
-
-
+router.register(r'leg-income', LegIncomeModelViewSet, basename='leg-income')
 
 urlpatterns = [
     path('', include(router.urls)),

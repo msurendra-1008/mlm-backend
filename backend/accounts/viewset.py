@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
-from .models import CustomUser
-from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from .models import CustomUser, LegIncomeModel
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import AllowAny
 
@@ -35,3 +35,9 @@ class UserViewSet(viewsets.ModelViewSet):
             'mobile': user.mobile,
             'message': "Logged in successfully!"
         }, status=status.HTTP_200_OK) 
+    
+
+
+class LegIncomeModelViewSet(viewsets.ModelViewSet):
+    queryset = LegIncomeModel.objects.all()
+    serializer_class = LegIncomeModelSerializer
