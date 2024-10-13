@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # my installed app
     'accounts',
     'upa',
+    'ecom_product',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'

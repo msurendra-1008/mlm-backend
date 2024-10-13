@@ -1,0 +1,87 @@
+from django.db import models
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+
+
+class ProductCategory(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+class Product(models.Model):
+    upc = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+    
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='product_images/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+# class ProductReview(models.Model):
+#     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     description = models.TextField()
+#     rating = models.PositiveSmallIntegerField()
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+class UserAddress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='addresses', on_delete=models.CASCADE)
+    house_no = models.CharField(max_length=50)
+    street = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.house_no}, {self.street}, {self.city}, {self.postal_code}, {self.country}"
+    
+class Cart(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Cart for {self.user.mobile_number}"
+    
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
+    
+# class Order(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     billing_address = models.ForeignKey(UserAddress, related_name='billing_orders', on_delete=models.SET_NULL, null=True)
+#     shipping_address = models.ForeignKey(UserAddress, related_name='shipping_orders', on_delete=models.SET_NULL, null=True)
+
+
+# class OrderItem(models.Model):
+#     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
+#     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+#     quantity = models.PositiveIntegerField()
+#     ordered_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+
+# class Payment(models.Model):
+#     order = models.OneToOneField(Order, on_delete=models.CASCADE)
+#     status = models.CharField(max_length=50)
+#     updated_at = models.DateTimeField(auto_now=True)
