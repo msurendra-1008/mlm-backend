@@ -48,19 +48,52 @@ class UserAddressSerializer(serializers.ModelSerializer):
         model = UserAddress
         fields = '__all__'
 
+# class CartItemSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CartItem
+#         fields = '__all__'
+
+# class CartSerializer(serializers.ModelSerializer):
+#     items = CartItemSerializer(many=True, read_only=True)
+
+#     class Meta:
+#         model = Cart
+#         fields = '__all__'
+
+class CartProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'image']
+
+class CartProductSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    images = CartProductImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ['id', 'images', 'upc', 'name', 'description', 'price', 'quantity', 'category_name', 'category', 'created_at', 'updated_at']
+
 class CartItemSerializer(serializers.ModelSerializer):
+    product = CartProductSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+    total_price = serializers.SerializerMethodField()
+
     class Meta:
         model = CartItem
-        fields = '__all__'
+        fields = ['id', 'cart', 'product', 'product_id', 'quantity', 'total_price']
 
+    def get_total_price(self, obj):
+        return obj.quantity * obj.product.price
+    
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = '__all__'
+        fields = ['id', 'user', 'items', 'total_price', 'created_at', 'updated_at']
 
-
-
+    def get_total_price(self, obj):
+        return sum(item.quantity * item.product.price for item in obj.items.all())
 
 
