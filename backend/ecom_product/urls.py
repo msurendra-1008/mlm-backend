@@ -9,7 +9,7 @@ router.register(r'products', ProductViewSet, basename='product')
 router.register(r'product-images', ProductImageViewSet, basename='product-image')
 router.register(r'user-addresses', UserAddressViewSet, basename='user-address')
 router.register(r'carts', CartViewSet, basename='cart')
-router.register(r'cart-items', CartItemViewSet, basename='cart-item')
+# router.register(r'cart-items', CartItemViewSet, basename='cart-item')
 
 urlpatterns = [
     path('ecom-product/', include(router.urls)),

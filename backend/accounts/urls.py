@@ -5,7 +5,8 @@ from rest_framework.routers import DefaultRouter
 from .viewset import LegIncomeModelViewSet, UserViewSet, PublicViewSet
 from .helpers import ProtectedView, PublicView
 
-
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')

@@ -154,6 +154,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
     ),
     # 'DEFAULT_PERMISSION_CLASSES': (
     #     'rest_framework.permissions.IsAuthenticated',
@@ -163,3 +164,6 @@ REST_FRAMEWORK = {
 # STATIC_URL = '/static/'  # Corrected
 # STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # Add this if needed
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Where static files are collected
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
