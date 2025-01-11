@@ -104,6 +104,24 @@ class CartViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     # permission_classes = [IsAuthenticated] 
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        cart_order_list = serializer.data
+        return Response({"cart_order_list": cart_order_list})
+    
+    @action(detail=False, methods=['GET'])
+    def my_orders(self, request):
+        """
+        Get cart orders for the authenticated user
+        """
+        user_carts = Cart.objects.filter(user=request.user)
+        serializer = self.get_serializer(user_carts, many=True)
+        return Response({
+            "user_orders": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
     @action(detail=False, methods=['post'])
     def add_to_create(self, request):
         # Ensure the user is authenticated
