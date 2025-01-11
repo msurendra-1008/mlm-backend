@@ -140,7 +140,7 @@ class CartViewSet(viewsets.ModelViewSet):
         for item in items_data:
             try:
                 product = Product.objects.get(id=item['id'])
-                cart_quantity = item.get('cartQuantity',1)
+                cart_quantity = item.get('cartQuantity', 1)
 
                 # check if product has image
                 if not product.images.exists():
@@ -156,18 +156,16 @@ class CartViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-                # Get or create cart item
-                cart_item, created = CartItem.objects.get_or_create(
+                # Create new cart item every time
+                cart_item = CartItem.objects.create(
                     cart=cart,
                     product=product,
+                    quantity=cart_quantity
                 )
 
-                # Update quantity
-                if created:
-                    cart_item.quantity = cart_quantity
-                else:
-                    cart_item.quantity += cart_quantity
-                cart_item.save()
+                # Decrease product quantity
+                product.quantity -= cart_quantity
+                product.save()
 
                 # Add to response data
                 response_data.append({
