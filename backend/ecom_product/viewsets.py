@@ -140,7 +140,7 @@ class CartViewSet(viewsets.ModelViewSet):
         for item in items_data:
             try:
                 product = Product.objects.get(id=item['id'])
-                cart_quantity = item.get('cartQuantity', 1)
+                cart_quantity = item.get('cart_quantity', 1)
 
                 # check if product has image
                 if not product.images.exists():
