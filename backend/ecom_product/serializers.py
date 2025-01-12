@@ -75,8 +75,10 @@ class CartProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'images', 'upc', 'name', 'description', 'price', 'quantity', 'category_name', 'category', 'created_at', 'updated_at']
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product = CartProductSerializer(read_only=True)
-    product_id = serializers.IntegerField(write_only=True)
+    product = CartProductSerializer(many=True, read_only=True)
+    product_id = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True
+    )
     total_price = serializers.SerializerMethodField()
     # user_address = serializers.SerializerMethodField()
 
@@ -85,19 +87,20 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'cart', 'product', 'product_id', 'quantity', 'total_price']
 
     def get_total_price(self, obj):
-        return obj.quantity * obj.product.price
+        # return obj.quantity * obj.product.price
+        return sum(product.price * obj.quantity for product in obj.product.all())
     
-    def get_user_address(self, obj):
-        if obj.user_address:
-            return {
-                "id": obj.user_address.id,
-                "address": obj.user_address.address,
-                "city": obj.user_address.city,
-                "state": obj.user_address.state,
-                "zip_code": obj.user_address.zip_code,
-                "is_default": obj.user_address.is_default
-            }
-        return None
+    # def get_user_address(self, obj):
+    #     if obj.user_address:
+    #         return {
+    #             "id": obj.user_address.id,
+    #             "address": obj.user_address.address,
+    #             "city": obj.user_address.city,
+    #             "state": obj.user_address.state,
+    #             "zip_code": obj.user_address.zip_code,
+    #             "is_default": obj.user_address.is_default
+    #         }
+    #     return None
     
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
@@ -108,10 +111,14 @@ class CartSerializer(serializers.ModelSerializer):
         model = Cart
         fields = ['id', 'user', 'items', 'quantity', 'total_price', 'created_at', 'updated_at']
 
-    def get_total_quantity(self, obj):
-        return sum(item.quantity for item in obj.item.all())
+    def get_quantity(self, obj):
+        return sum(item.quantity for item in obj.items.all())
 
     def get_total_price(self, obj):
-        return sum(item.quantity * item.product.price for item in obj.items.all())
+        total_price = 0
+        for item in obj.items.all():
+            for product in item.product.all():  # Handle the ManyToMany relationship
+                total_price += item.quantity * product.price
+        return total_price
 
 

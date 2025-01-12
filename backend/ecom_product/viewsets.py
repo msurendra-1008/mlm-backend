@@ -186,7 +186,7 @@ class CartViewSet(viewsets.ModelViewSet):
         cart, created = Cart.objects.get_or_create(user=request.user)
 
         # Get the items data from request
-        items_data = request.data.get('items', [])
+        items_data = request.data.get('items')
         transaction_id = request.data.get('transaction_id')
 
         # Validate transaction ID
@@ -197,7 +197,7 @@ class CartViewSet(viewsets.ModelViewSet):
         address_id = request.data.get('address_id')
         try:
             if address_id:
-                user_address = UserAddress.objects.get(id=address_id, user=request.user)
+                user_address = UserAddress.objects.get(id=address_id)
             else:
                 user_address = UserAddress.objects.filter(user=request.user, is_default=True).first()
                 if not user_address:
@@ -217,7 +217,8 @@ class CartViewSet(viewsets.ModelViewSet):
             cart_item = CartItem.objects.create(
                 cart=cart,
                 quantity=0,  # Will update later after processing products
-                transaction_id=transaction_id
+                transaction_id=transaction_id,
+                user_address=user_address,
             )
 
             for item in items_data:
@@ -251,7 +252,8 @@ class CartViewSet(viewsets.ModelViewSet):
                     raise ValueError(f'Product with id {product_id} not found.')
 
             # Associate all products with the CartItem
-            cart_item.products.set(cart_products)
+            # cart_item.product.set(cart_products)
+            cart_item.product.add(*cart_products)
             cart_item.quantity = total_quantity  # Update the total quantity
             cart_item.save()
 
