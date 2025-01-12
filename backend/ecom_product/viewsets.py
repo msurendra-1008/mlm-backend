@@ -151,11 +151,15 @@ class CartViewSet(viewsets.ModelViewSet):
 
                 # Add details of products in the cart item
                 for product in cart_item.product.all():  # Access related Product objects
+                    product_images = product.images.all()
+                    product_image_urls = [request.build_absolute_uri(image.image.url) for image in product_images]
                     cart_item_data['products'].append({
                         'product_id': product.id,
                         'product_name': product.name,
+                        'description': product.description,
                         'price': product.price,
                         'quantity': cart_item.quantity,
+                        'product_images': product_image_urls,
                     })
 
                 # Add cart item to the order
