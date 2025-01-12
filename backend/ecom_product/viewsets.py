@@ -206,7 +206,7 @@ class CartViewSet(viewsets.ModelViewSet):
             quantity = 0
             cart_product = []
 
-            for product_data in item['product']:
+            for item in item['product']:
                 try:
                     product = Product.objects.get(id=item['id'])
                     cart_quantity = item.get('cart_quantity', 1)
