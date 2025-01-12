@@ -23,6 +23,11 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE)
 
+    # status = models.CharField(max_length=20, null=True, blank=True)
+    user_address = models.CharField(max_length=10, null=True, blank=True)
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    # is_payment = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
     
@@ -45,8 +50,10 @@ class UserAddress(models.Model):
     street = models.CharField(max_length=100)
     city = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
-    country = models.CharField(max_length=100)
+    state = models.CharField(max_length=50,null=True, blank=True)
+    country = models.CharField(max_length=100, default="India")
     updated_at = models.DateTimeField(auto_now=True)
+    is_default = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.house_no}, {self.street}, {self.city}, {self.postal_code}, {self.country}"
@@ -60,12 +67,21 @@ class Cart(models.Model):
         return f"Cart for {self.user.mobile}"
     
 class CartItem(models.Model):
+    STATUS_CHOICES = [
+        ('ordered', 'Ordered'),
+        ('cancelled', 'Cancelled'),
+        ('processing', 'Processing'),
+    ]
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ManyToManyField(Product, related_name='cart_item')
     quantity = models.PositiveIntegerField(default=1)
+    user_address = models.ForeignKey(UserAddress, on_delete=models.CASCADE, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ordered")
+    transaction_id = models.CharField(max_length=100, null=True, blank=True, help_text="Payment made by RazorPay")
+    is_payment = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
+        return f"{self.quantity} x {self.product.name} (self.get_status_display())"
     
 # class Order(models.Model):
 #     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

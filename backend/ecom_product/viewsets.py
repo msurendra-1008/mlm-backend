@@ -33,6 +33,21 @@ class ProductImageViewSet(viewsets.ModelViewSet):
 class UserAddressViewSet(viewsets.ModelViewSet):
     queryset = UserAddress.objects.all()
     serializer_class = UserAddressSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return UserAddress.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        user_addresses = self.get_queryset()
+        serializers = self.get_serializer(user_addresses, many=True)
+        return Response({
+            "user_addresses": serializers.data
+        }, status=status.HTTP_200_OK)
 
 # class CartViewSet(viewsets.ModelViewSet):
 #     queryset = Cart.objects.all()
@@ -115,10 +130,34 @@ class CartViewSet(viewsets.ModelViewSet):
         """
         Get cart orders for the authenticated user
         """
-        user_carts = Cart.objects.filter(user=request.user)
-        serializer = self.get_serializer(user_carts, many=True)
+        # Fetch all cart items for the current user
+        user_carts = Cart.objects.filter(user=request.user).prefetch_related('items__products').order_by('-created_at')
+        
+        cart_items = []
+        # Loop through carts and fetch cart items (orders)
+        for cart in user_carts:
+            for cart_item in cart.items.all():
+                cart_item_data = {
+                    'order_id': cart_item.id,
+                    'products': [],
+                    'total_quantity': cart_item.total_quantity,
+                    'total_price': sum([product.price * product.cartitem_set.get(cart=cart).quantity for product in cart_item.products.all()]),
+                    'created_at': cart_item.created_at,
+                }
+                
+                # Add product details for this cart item
+                for product in cart_item.products.all():
+                    cart_item_data['products'].append({
+                        'product_id': product.id,
+                        'product_name': product.name,
+                        'quantity': cart_item.quantity,
+                        'price': product.price
+                    })
+
+                cart_items.append(cart_item_data)
+        
         return Response({
-            "user_orders": serializer.data
+            'orders': cart_items
         }, status=status.HTTP_200_OK)
 
 
@@ -134,51 +173,83 @@ class CartViewSet(viewsets.ModelViewSet):
         cart, created = Cart.objects.get_or_create(user=request.user)
 
         # Get the items data from request
-        items_data = request.data
+        items_data = request.data.get('items', [])
+        address_id = request.data.get('address_id')
+        transaction_id = request.data.get('transation_id')
+        # is_payment = request.data.get('is_payment')
+
+        # validate or fetch default address
+        try:
+            if address_id:
+                user_address = UserAddress.objects.get(id=address_id, user=request.user)
+            else:
+                user_address = UserAddress.objects.filter(user=request.user, is_default=True)
+                if not user_address:
+                    return Response({
+                        'error': 'No deefault address available for this user.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+        except UserAddress.DoesNotExist:
+            return Response({'error': 'Invalid adress ID'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
         response_data = []
 
         for item in items_data:
-            try:
-                product = Product.objects.get(id=item['id'])
-                cart_quantity = item.get('cart_quantity', 1)
+            quantity = 0
+            cart_product = []
 
-                # check if product has image
-                if not product.images.exists():
+            for product_data in item['product']:
+                try:
+                    product = Product.objects.get(id=item['id'])
+                    cart_quantity = item.get('cart_quantity', 1)
+
+                    # check if product has image
+                    if not product.images.exists():
+                        return Response(
+                            {'error': f'Product {product.name} must have atleast one image'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    
+                    # check if product has enough quantity
+                    if product.quantity < cart_quantity:
+                        return Response(
+                            {'error': f'Not enough quantity available for {product.name}'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    
+                    cart_product.append(product)
+                    quantity += cart_quantity
+
+                    # decrease the product quntity
+                    product.quantity -= cart_quantity
+                    product.save()
+
+                except Product.DoesNotExist:
                     return Response(
-                        {'error': f'Product {product.name} must have atleast one image'},
-                        status=status.HTTP_400_BAD_REQUEST
+                        {'error': f'Product with id {item["id"]} not found'},
+                        status=status.HTTP_404_NOT_FOUND
                     )
-                
-                # check if product has enough quantity
-                if product.quantity < cart_quantity:
-                    return Response(
-                        {'error': f'Not enough quantity available for {product.name}'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
-                # Create new cart item every time
-                cart_item = CartItem.objects.create(
-                    cart=cart,
-                    product=product,
-                    quantity=cart_quantity
-                )
+            if not transaction_id:
+                return Response({'error': 'No payment and transaction id provided'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create CartItem with multiple products
+            cart_item = CartItem.objects.create(
+                cart=cart,
+                quantity=quantity
+            )
+            cart_item.products.set(cart_product)  # Associate multiple products with the cart item
 
-                # Decrease product quantity
-                product.quantity -= cart_quantity
-                product.save()
+            # Save cart item and respond with the details
+            cart_item.save()
 
-                # Add to response data
-                response_data.append({
-                    'product_name': product.name,
-                    'quantity': cart_item.quantity,
-                    'status': 'added to cart'
-                })
-            except Product.DoesNotExist:
-                return Response(
-                    {'error': f'Product with id {item["id"]} not found'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
+            response_data.append({
+                'products': [product.name for product in cart_product],
+                'quantity': quantity,
+                'status': 'added to cart'
+            })
+
         cart_serializer = self.get_serializer(cart)
+
         return Response({
             'message': 'Items added to cart successfully',
             'item_status': response_data,

@@ -32,7 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         # fields = '__all__'
-        fields = ['id', 'images_url', 'upc', 'name', 'description', 'price', 'quantity', 'cart_quantity', 'category_name', 'category', 'created_at', 'updated_at']
+        fields = ['id', 'images_url', 'upc', 'name', 'description', 'price', 'quantity', 'cart_quantity', 'category_name', 'category', 'updated_at']
 
     def get_images_url(self, obj):
         request = self.context.get('request')
@@ -46,7 +46,8 @@ class ProductSerializer(serializers.ModelSerializer):
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAddress
-        fields = '__all__'
+        fields = ['id', 'user', 'house_no', 'street', 'city', 'postal_code', 'state', 'country', 'is_default']
+        read_only_field = ['user']
 
 # class CartItemSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -77,6 +78,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     product = CartProductSerializer(read_only=True)
     product_id = serializers.IntegerField(write_only=True)
     total_price = serializers.SerializerMethodField()
+    # user_address = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
@@ -85,13 +87,29 @@ class CartItemSerializer(serializers.ModelSerializer):
     def get_total_price(self, obj):
         return obj.quantity * obj.product.price
     
+    def get_user_address(self, obj):
+        if obj.user_address:
+            return {
+                "id": obj.user_address.id,
+                "address": obj.user_address.address,
+                "city": obj.user_address.city,
+                "state": obj.user_address.state,
+                "zip_code": obj.user_address.zip_code,
+                "is_default": obj.user_address.is_default
+            }
+        return None
+    
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total_price = serializers.SerializerMethodField()
+    quantity = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'items', 'total_price', 'created_at', 'updated_at']
+        fields = ['id', 'user', 'items', 'quantity', 'total_price', 'created_at', 'updated_at']
+
+    def get_total_quantity(self, obj):
+        return sum(item.quantity for item in obj.item.all())
 
     def get_total_price(self, obj):
         return sum(item.quantity * item.product.price for item in obj.items.all())
