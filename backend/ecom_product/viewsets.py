@@ -181,89 +181,98 @@ class CartViewSet(viewsets.ModelViewSet):
                 {"error": "Authentication required"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
         # Get or create cart for the current user
         cart, created = Cart.objects.get_or_create(user=request.user)
 
         # Get the items data from request
         items_data = request.data.get('items', [])
-        address_id = request.data.get('address_id')
-        transaction_id = request.data.get('transation_id')
-        # is_payment = request.data.get('is_payment')
+        transaction_id = request.data.get('transaction_id')
 
-        # validate or fetch default address
+        # Validate transaction ID
+        if not transaction_id:
+            return Response({'error': 'Transaction ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate address ID or default address
+        address_id = request.data.get('address_id')
         try:
             if address_id:
                 user_address = UserAddress.objects.get(id=address_id, user=request.user)
             else:
-                user_address = UserAddress.objects.filter(user=request.user, is_default=True)
+                user_address = UserAddress.objects.filter(user=request.user, is_default=True).first()
                 if not user_address:
                     return Response({
-                        'error': 'No deefault address available for this user.'
+                        'error': 'No default address available for this user.'
                     }, status=status.HTTP_400_BAD_REQUEST)
         except UserAddress.DoesNotExist:
-            return Response({'error': 'Invalid adress ID'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Invalid address ID'}, status=status.HTTP_400_BAD_REQUEST)
 
         response_data = []
+        total_quantity = 0
+        cart_products = []
+        product_quantities = []  # To track original product quantities for rollback
 
-        for item in items_data:
-            quantity = 0
-            cart_product = []
-
-            for item in item['product']:
-                try:
-                    product = Product.objects.get(id=item['id'])
-                    cart_quantity = item.get('cart_quantity', 1)
-
-                    # check if product has image
-                    if not product.images.exists():
-                        return Response(
-                            {'error': f'Product {product.name} must have atleast one image'},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                    
-                    # check if product has enough quantity
-                    if product.quantity < cart_quantity:
-                        return Response(
-                            {'error': f'Not enough quantity available for {product.name}'},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                    
-                    cart_product.append(product)
-                    quantity += cart_quantity
-
-                    # decrease the product quntity
-                    product.quantity -= cart_quantity
-                    product.save()
-
-                except Product.DoesNotExist:
-                    return Response(
-                        {'error': f'Product with id {item["id"]} not found'},
-                        status=status.HTTP_404_NOT_FOUND
-                    )
-            if not transaction_id:
-                return Response({'error': 'No payment and transaction id provided'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Create CartItem with multiple products
+        try:
+            # Create a single CartItem for all products
             cart_item = CartItem.objects.create(
                 cart=cart,
-                quantity=quantity
+                quantity=0,  # Will update later after processing products
+                transaction_id=transaction_id
             )
-            cart_item.products.set(cart_product)  # Associate multiple products with the cart item
 
-            # Save cart item and respond with the details
+            for item in items_data:
+                product_id = item.get('id')
+                cart_quantity = item.get('cart_quantity', 1)  # Default to 1 if not provided
+
+                try:
+                    # Fetch the product by its ID
+                    product = Product.objects.get(id=product_id)
+
+                    # Check if product has image
+                    if not product.images.exists():
+                        raise ValueError(f'Product {product.name} must have at least one image.')
+
+                    # Check if product has enough stock
+                    if product.quantity < cart_quantity:
+                        raise ValueError(f'Not enough quantity available for {product.name}.')
+
+                    # Add product and quantity details to the cart
+                    cart_products.append(product)
+                    product_quantities.append((product, cart_quantity))  # Save for rollback
+                    total_quantity += cart_quantity
+
+                    response_data.append({
+                        'product_name': product.name,
+                        'quantity': cart_quantity,
+                        'status': 'added to cart'
+                    })
+
+                except Product.DoesNotExist:
+                    raise ValueError(f'Product with id {product_id} not found.')
+
+            # Associate all products with the CartItem
+            cart_item.products.set(cart_products)
+            cart_item.quantity = total_quantity  # Update the total quantity
             cart_item.save()
 
-            response_data.append({
-                'products': [product.name for product in cart_product],
-                'quantity': quantity,
-                'status': 'added to cart'
-            })
+            # Decrease product quantities only after CartItem is successfully created
+            for product, cart_quantity in product_quantities:
+                product.quantity -= cart_quantity
+                product.save()
 
-        cart_serializer = self.get_serializer(cart)
+            cart_serializer = self.get_serializer(cart)
 
-        return Response({
-            'message': 'Items added to cart successfully',
-            'item_status': response_data,
-            'cart_data': cart_serializer.data
-        }, status=status.HTTP_200_OK)
+            return Response({
+                'message': 'Items added to cart successfully',
+                'item_status': response_data,
+                'cart_data': cart_serializer.data
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            # Roll back changes on failure
+            for product, cart_quantity in product_quantities:
+                product.quantity += cart_quantity  # Restore original quantity
+                product.save()
+
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
