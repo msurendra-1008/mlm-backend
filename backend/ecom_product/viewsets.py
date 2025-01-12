@@ -131,33 +131,41 @@ class CartViewSet(viewsets.ModelViewSet):
         Get cart orders for the authenticated user
         """
         # Fetch all cart items for the current user
-        user_carts = Cart.objects.filter(user=request.user).prefetch_related('items__products').order_by('-created_at')
-        
-        cart_items = []
-        # Loop through carts and fetch cart items (orders)
+        user_carts = Cart.objects.filter(user=request.user).prefetch_related('items__product').order_by('-created_at')
+
+        orders = []
+        # Loop through carts and their items
         for cart in user_carts:
-            for cart_item in cart.items.all():
+            order = {
+                'cart_id': cart.id,
+                'created_at': cart.created_at,
+                'items': [],
+            }
+
+            for cart_item in cart.items.all():  # Access related CartItem objects
                 cart_item_data = {
-                    'order_id': cart_item.id,
+                    'order_item_id': cart_item.id,
+                    'total_quantity': cart_item.quantity,
                     'products': [],
-                    'total_quantity': cart_item.total_quantity,
-                    'total_price': sum([product.price * product.cartitem_set.get(cart=cart).quantity for product in cart_item.products.all()]),
-                    'created_at': cart_item.created_at,
                 }
-                
-                # Add product details for this cart item
-                for product in cart_item.products.all():
+
+                # Add details of products in the cart item
+                for product in cart_item.product.all():  # Access related Product objects
                     cart_item_data['products'].append({
                         'product_id': product.id,
                         'product_name': product.name,
+                        'price': product.price,
                         'quantity': cart_item.quantity,
-                        'price': product.price
                     })
 
-                cart_items.append(cart_item_data)
-        
+                # Add cart item to the order
+                order['items'].append(cart_item_data)
+
+            # Add the order to the orders list
+            orders.append(order)
+
         return Response({
-            'orders': cart_items
+            'orders': orders
         }, status=status.HTTP_200_OK)
 
 
