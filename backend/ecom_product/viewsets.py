@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from django.db import transaction
+from django.db.models import F, Case, When, Prefetch
 from .models import *
 from .serializers import *
 
@@ -175,106 +177,165 @@ class CartViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def add_to_create(self, request):
-        # Ensure the user is authenticated
+        """Optimized version of add_to_create"""
         if not request.user.is_authenticated:
             return Response(
                 {"error": "Authentication required"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Get or create cart for the current user
-        cart, created = Cart.objects.get_or_create(user=request.user)
-
-        # Get the items data from request
-        items_data = request.data.get('items')
+        items_data = request.data.get('items', [])
         transaction_id = request.data.get('transaction_id')
+        address_id = request.data.get('address_id')
 
-        # Validate transaction ID
+        # Early validation
         if not transaction_id:
             return Response({'error': 'Transaction ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not items_data:
+            return Response({'error': 'No items provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate address ID or default address
-        address_id = request.data.get('address_id')
+        # Get all required data in bulk
         try:
-            if address_id:
-                user_address = UserAddress.objects.get(id=address_id)
-            else:
-                user_address = UserAddress.objects.filter(user=request.user, is_default=True).first()
+            # Get or create cart in a single query
+            cart = Cart.objects.select_related('user').get_or_create(user=request.user)[0]
+
+            # Improved address validation
+            try:
+                if address_id:
+                    # Convert string address_id to integer
+                    address_id = int(address_id)
+                    user_address = UserAddress.objects.get(
+                        id=address_id
+                    )
+                else:
+                    user_address = UserAddress.objects.filter(
+                        user=request.user,
+                        is_default=True
+                    ).first()
+
                 if not user_address:
                     return Response({
-                        'error': 'No default address available for this user.'
+                        'error': 'No valid address found. Please provide a valid address or set a default address.'
                     }, status=status.HTTP_400_BAD_REQUEST)
-        except UserAddress.DoesNotExist:
-            return Response({'error': 'Invalid address ID'}, status=status.HTTP_400_BAD_REQUEST)
 
-        response_data = []
-        total_quantity = 0
-        cart_products = []
-        product_quantities = []  # To track original product quantities for rollback
+            except (ValueError, TypeError):
+                return Response({
+                    'error': 'Invalid address ID format'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            except UserAddress.DoesNotExist:
+                return Response({
+                    'error': 'Address not found'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            # Create a single CartItem for all products
-            cart_item = CartItem.objects.create(
-                cart=cart,
-                quantity=0,  # Will update later after processing products
-                transaction_id=transaction_id,
-                user_address=user_address,
-            )
+            # Get all product IDs from items_data
+            product_ids = [item['id'] for item in items_data]
+            
+            # Fetch all products and their images in a single query
+            products = (Product.objects
+                      .filter(id__in=product_ids)
+                      .prefetch_related('images')
+                      .select_related('category'))
+
+            # Create a dictionary for quick product lookup
+            products_dict = {str(p.id): p for p in products}
+
+            # Validate products and quantities
+            total_quantity = 0
+            product_updates = []
+            missing_products = []
+            invalid_products = []
 
             for item in items_data:
-                product_id = item.get('id')
-                cart_quantity = item.get('cart_quantity', 1)  # Default to 1 if not provided
+                product_id = str(item['id'])
+                cart_quantity = int(item.get('cart_quantity', 1))
+                
+                if product_id not in products_dict:
+                    missing_products.append(product_id)
+                    continue
 
-                try:
-                    # Fetch the product by its ID
-                    product = Product.objects.get(id=product_id)
-
-                    # Check if product has image
-                    if not product.images.exists():
-                        raise ValueError(f'Product {product.name} must have at least one image.')
-
-                    # Check if product has enough stock
-                    if product.quantity < cart_quantity:
-                        raise ValueError(f'Not enough quantity available for {product.name}.')
-
-                    # Add product and quantity details to the cart
-                    cart_products.append(product)
-                    product_quantities.append((product, cart_quantity))  # Save for rollback
+                product = products_dict[product_id]
+                
+                if not product.images.exists():
+                    invalid_products.append(f"Product {product.name} has no images")
+                elif product.quantity < cart_quantity:
+                    invalid_products.append(f"Insufficient stock for {product.name}")
+                else:
                     total_quantity += cart_quantity
+                    product_updates.append((product, cart_quantity))
 
-                    response_data.append({
-                        'product_name': product.name,
-                        'quantity': cart_quantity,
-                        'status': 'added to cart'
-                    })
+            if missing_products or invalid_products:
+                return Response({
+                    'error': 'Validation failed',
+                    'missing_products': missing_products,
+                    'invalid_products': invalid_products
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-                except Product.DoesNotExist:
-                    raise ValueError(f'Product with id {product_id} not found.')
+            # Create CartItem and update products in a transaction
+            with transaction.atomic():
+                # Create cart item
+                cart_item = CartItem.objects.create(
+                    cart=cart,
+                    quantity=total_quantity,
+                    transaction_id=transaction_id,
+                    user_address=user_address,
+                    status='ordered'
+                )
 
-            # Associate all products with the CartItem
-            # cart_item.product.set(cart_products)
-            cart_item.product.add(*cart_products)
-            cart_item.quantity = total_quantity  # Update the total quantity
-            cart_item.save()
+                # Add products to cart item
+                cart_item.product.add(*[p for p, _ in product_updates])
 
-            # Decrease product quantities only after CartItem is successfully created
-            for product, cart_quantity in product_quantities:
-                product.quantity -= cart_quantity
-                product.save()
+                # Update product quantities in bulk
+                product_quantity_cases = []
+                for product, cart_quantity in product_updates:
+                    product_quantity_cases.append(
+                        When(id=product.id, then=F('quantity') - cart_quantity)
+                    )
 
-            cart_serializer = self.get_serializer(cart)
+                Product.objects.filter(id__in=[p.id for p, _ in product_updates]).update(
+                    quantity=Case(
+                        *product_quantity_cases,
+                        default=F('quantity'),
+                        output_field=models.PositiveIntegerField()  # Explicitly set output field type
+                    )
+                )
+
+            # Prepare response data
+            response_data = [{
+                'product_name': products_dict[str(item['id'])].name,
+                'quantity': item.get('cart_quantity', 1),
+                'status': 'added to cart'
+            } for item in items_data]
+
+            # Get only the newly created cart item data
+            cart_item_serializer = CartItemSerializer(cart_item)
 
             return Response({
                 'message': 'Items added to cart successfully',
                 'item_status': response_data,
-                'cart_data': cart_serializer.data
+                'order_data': {
+                    'order_id': cart_item.id,
+                    'transaction_id': cart_item.transaction_id,
+                    'total_quantity': cart_item.quantity,
+                    'products': [{
+                        'id': product.id,
+                        'name': product.name,
+                        'price': str(product.price),
+                        'image_url': product.images.first().image.url if product.images.exists() else None
+                    } for product in cart_item.product.all()],
+                    'delivery_address': {
+                        'id': user_address.id,
+                        'house_no': user_address.house_no,
+                        'street': user_address.street,
+                        'city': user_address.city,
+                        'postal_code': user_address.postal_code,
+                        'state': user_address.state,
+                        'country': user_address.country
+                    },
+                    'status': cart_item.status,
+                    'created_at': cart_item.cart.created_at
+                }
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            # Roll back changes on failure
-            for product, cart_quantity in product_quantities:
-                product.quantity += cart_quantity  # Restore original quantity
-                product.save()
-
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
