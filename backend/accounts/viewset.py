@@ -31,8 +31,11 @@ class UserViewSet(viewsets.ModelViewSet):
         token, created = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
+            'user_id': user.id,
             'name': user.name,
             'mobile': user.mobile,
+            'upa_uid_number': user.uid_no,
+            'account_balance': user.account_balance,
             'message': "Logged in successfully!"
         }, status=status.HTTP_200_OK) 
     
