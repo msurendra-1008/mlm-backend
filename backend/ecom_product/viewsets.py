@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -278,7 +279,7 @@ class CartViewSet(viewsets.ModelViewSet):
                     quantity=total_quantity,
                     transaction_id=transaction_id,
                     user_address=user_address,
-                    status='ordered'
+                    status='processing'
                 )
 
                 # Add products to cart item
@@ -339,3 +340,52 @@ class CartViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            # Extract payment details from request data
+            cart_item_id = request.data.get('cart_item')
+            payment_id = request.data.get('razorpay_payment_id')  # From Razorpay response
+            order_amount = request.data.get('order_amount')
+            status = request.data.get('status')  
+
+            # Validate required fields
+            if not all([cart_item_id, payment_id, order_amount]):
+                raise ValidationError("Missing required fields")
+
+            # Get cart item and verify it belongs to the current user
+            cart_item = CartItem.objects.select_related('cart__user').get(
+                id=cart_item_id,
+                cart__user=request.user
+            )
+
+            # Create payment record with full request data as payment_response
+            payment = Payment.objects.create(
+                cart_item=cart_item,
+                payment_id=payment_id,
+                status=status,
+                order_amount=order_amount,
+                payment_response=request.data  # Store complete request data
+            )
+
+            serializer = self.get_serializer(payment)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except CartItem.DoesNotExist:
+            return Response(
+                {"error": "Invalid cart item or unauthorized"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

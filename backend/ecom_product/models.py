@@ -76,7 +76,7 @@ class CartItem(models.Model):
     product = models.ManyToManyField(Product, related_name='cart_item')
     quantity = models.PositiveIntegerField(default=1)
     user_address = models.ForeignKey(UserAddress, on_delete=models.CASCADE, null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ordered")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="processing")
     transaction_id = models.CharField(max_length=100, null=True, blank=True, help_text="Payment made by RazorPay")
     is_payment = models.BooleanField(default=False)
 
@@ -103,3 +103,31 @@ class CartItem(models.Model):
 #     order = models.OneToOneField(Order, on_delete=models.CASCADE)
 #     status = models.CharField(max_length=50)
 #     updated_at = models.DateTimeField(auto_now=True)
+
+class Payment(models.Model):
+    PAYMENT_STATUS = [
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+    
+    cart_item = models.ForeignKey(CartItem, on_delete=models.CASCADE, related_name='payments')
+    payment_id = models.CharField(max_length=100, unique=True)
+    order_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS)
+    payment_response = models.JSONField(null=True, blank=True)  # Store complete payment response
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Payment {self.payment_id} for CartItem {self.cart_item.id}"
+
+    def save(self, *args, **kwargs):
+        if self.status == 'success':
+            self.cart_item.status = 'ordered'
+            self.cart_item.is_payment = True
+            self.cart_item.save()
+        elif self.status == 'failed':
+            self.cart_item.status = 'cancelled'
+            self.cart_item.save()
+        super().save(*args, **kwargs)

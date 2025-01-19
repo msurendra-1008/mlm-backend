@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 from .models import(
+    Payment,
     ProductCategory,
     Product,
     ProductImage,
@@ -122,3 +123,13 @@ class CartSerializer(serializers.ModelSerializer):
         return total_price
 
 
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id', 'cart_item', 'payment_id', 'order_amount', 'status', 'created_at']
+        read_only_fields = ['created_at']
+
+    def validate_cart_item(self, value):
+        if value.is_payment:
+            raise serializers.ValidationError("Payment already processed for this order")
+        return value
