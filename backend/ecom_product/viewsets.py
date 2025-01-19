@@ -278,8 +278,7 @@ class CartViewSet(viewsets.ModelViewSet):
                     cart=cart,
                     quantity=total_quantity,
                     transaction_id=transaction_id,
-                    user_address=user_address,
-                    status='processing'
+                    user_address=user_address
                 )
 
                 # Add products to cart item
