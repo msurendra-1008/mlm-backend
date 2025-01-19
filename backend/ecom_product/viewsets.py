@@ -309,6 +309,11 @@ class CartViewSet(viewsets.ModelViewSet):
             # Get only the newly created cart item data
             cart_item_serializer = CartItemSerializer(cart_item)
 
+            total_price = sum(
+                product.price * cart_item.quantity 
+                for product in cart_item.product.all()
+            )
+
             return Response({
                 'message': 'Items added to cart successfully',
                 'item_status': response_data,
@@ -316,6 +321,7 @@ class CartViewSet(viewsets.ModelViewSet):
                     'order_id': cart_item.id,
                     'transaction_id': cart_item.transaction_id,
                     'total_quantity': cart_item.quantity,
+                    'total_price': str(total_price),
                     'products': [{
                         'id': product.id,
                         'name': product.name,
@@ -358,7 +364,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
             # Validate required fields
             if not all([cart_item_id, payment_id, order_amount]):
-                raise ValidationError("Missing required fields")
+                return Response(
+                    {"error": "Missing required fields"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Get cart item and verify it belongs to the current user
             cart_item = CartItem.objects.select_related('cart__user').get(
