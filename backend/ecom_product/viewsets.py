@@ -410,7 +410,12 @@ class WalletViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         wallet, created = Wallet.objects.get_or_create(user=request.user)
         serializer = self.get_serializer(wallet)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({"wallet":serializer.data}, status=status.HTTP_201_CREATED)
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"wallet": serializer.data})
     
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
@@ -452,3 +457,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(transaction)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"transactions": serializer.data})  # Wrap the data in a dictionary
