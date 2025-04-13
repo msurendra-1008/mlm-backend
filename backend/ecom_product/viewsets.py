@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation
 from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -394,4 +395,60 @@ class PaymentViewSet(viewsets.ModelViewSet):
         )
 
         serializer = self.get_serializer(payment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+class WalletViewSet(viewsets.ModelViewSet):
+    queryset = Wallet.objects.all()
+    serializer_class = WalletSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Wallet.objects.filter(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        wallet, created = Wallet.objects.get_or_create(user=request.user)
+        serializer = self.get_serializer(wallet)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Transaction.objects.filter(wallet__user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        wallet, created = Wallet.objects.get_or_create(user=request.user)
+        amount = request.data.get('amount')
+        transaction_type = request.data.get('transaction_type')
+        description = request.data.get('description', '')
+
+        # Convert amount to Decimal
+        try:
+            amount = Decimal(amount)  # Convert to Decimal
+        except (ValueError, InvalidOperation):
+            return Response({'error': "Invalid amount format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if transaction_type == 'debited' and wallet.balance < amount:
+            return Response({'error': "Insufficient Balance"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if transaction_type == 'credited':
+            wallet.balance += amount
+        elif transaction_type == 'debited':
+            wallet.balance -= amount
+
+        wallet.save()
+
+        transaction = Transaction.objects.create(
+            wallet=wallet,
+            amount=amount,
+            transaction_type=transaction_type,
+            description=description
+        )
+
+        serializer = self.get_serializer(transaction)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -131,3 +131,28 @@ class Payment(models.Model):
             self.cart_item.status = 'cancelled'
             self.cart_item.save()
         super().save(*args, **kwargs)
+
+
+class Wallet(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default="0.00")
+
+    def __str__(self):
+        return f"Wallet for {self.user.mobile} - Balance: {self.balance}"
+    
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('credited', 'Credited'),
+        ('debited', 'Debited'),
+    ]
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.transaction_type.capitalize()} of {self.amount} on {self.created_at}"
+    

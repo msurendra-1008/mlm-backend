@@ -5,9 +5,11 @@ from .models import(
     ProductCategory,
     Product,
     ProductImage,
+    Transaction,
     UserAddress,
     Cart,
-    CartItem
+    CartItem,
+    Wallet
 )
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -133,3 +135,17 @@ class PaymentSerializer(serializers.ModelSerializer):
         if value.is_payment:
             raise serializers.ValidationError("Payment already processed for this order")
         return value
+    
+
+class WalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wallet
+        fields = ['user', 'balance']
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['id', 'wallet', 'amount', 'transaction_type', 'created_at', 'description']
+
+
