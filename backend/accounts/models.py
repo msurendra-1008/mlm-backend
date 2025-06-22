@@ -100,3 +100,25 @@ class LegIncomeModel(models.Model):
         verbose_name = _('Leg Income Model')
         verbose_name_plural = _('Leg Income Models')
 
+
+
+# creating model for General Income setting.
+
+class IncomeSetting(models.Model):
+
+    CHILD_TYPE = (
+        ('Normal','Normal'),
+        ('BPL','BPL'),
+        ('Handicap','Handicap')
+    )
+
+    child_one               = models.CharField(max_length=15,choices=CHILD_TYPE,blank=True, null=True)
+    child_two               = models.CharField(max_length=15,choices=CHILD_TYPE,blank=True, null=True)
+    child_three             = models.CharField(max_length=15,choices=CHILD_TYPE,blank=True, null=True)
+    income                  = models.PositiveIntegerField(default=0,blank=True, null=True)
+    previous_income         = models.PositiveIntegerField(default=0,blank=True, null=True)
+    created_date            = models.DateField(auto_now_add=True)
+    updated_date            = models.DateField(auto_now=True)
+
+    def __str__(self):
+        return str(self.id)

@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
-from .models import CustomUser, LegIncomeModel
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer
+from .models import CustomUser, LegIncomeModel, IncomeSetting
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer, IncomeSettingSerializer
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import AllowAny
 
@@ -44,3 +44,12 @@ class UserViewSet(viewsets.ModelViewSet):
 class LegIncomeModelViewSet(viewsets.ModelViewSet):
     queryset = LegIncomeModel.objects.all()
     serializer_class = LegIncomeModelSerializer
+    
+    
+    
+    
+# General Income Setting:
+
+class IncomeSettingViewSet(viewsets.ModelViewSet):
+    queryset = IncomeSetting.objects.all().order_by('-created_date')
+    serializer_class = IncomeSettingSerializer

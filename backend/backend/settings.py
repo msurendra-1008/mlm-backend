@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-=531#g2*7crfu_98!1do%5+jr72s(!pb!^rxj=q&!d-p3u5#n4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".vercel.app", ".now.sh", "127.0.0.1"]
+ALLOWED_HOSTS = [".vercel.app", ".now.sh", "127.0.0.1",]
 
 
 # Application definition
@@ -48,11 +48,13 @@ INSTALLED_APPS = [
     'accounts',
     'upa',
     'ecom_product',
+    'corsheaders',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -167,3 +169,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Where static files are co
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # for local dev
+    "https://3000-firebase-mlm-frontendgit-1750587382279.cluster-w5vd22whf5gmav2vgkomwtc4go.cloudworkstations.dev",
+]
+
+# CORS_ALLOW_ALL_ORIGINS = True
