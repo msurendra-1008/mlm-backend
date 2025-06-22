@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 from rest_framework.pagination import PageNumberPagination
-from .models import CustomUser, LegIncomeModel, IncomeSetting
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer, IncomeSettingSerializer
+from .models import CustomUser, LegIncomeModel, IncomeSetting, IncomeSettingForWomenOld
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer, IncomeSettingSerializer, IncomeSettingForWomenOldSerializer
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import AllowAny
 
@@ -55,4 +55,10 @@ class GeneralIncomePagination(PageNumberPagination):
 class IncomeSettingViewSet(viewsets.ModelViewSet):
     queryset = IncomeSetting.objects.all().order_by('-created_date')
     serializer_class = IncomeSettingSerializer
+    pagination_class = GeneralIncomePagination
+    
+
+class IncomeSettingForWomenOldViewSet(viewsets.ModelViewSet):
+    queryset = IncomeSettingForWomenOld.objects.all().order_by('-created_date')
+    serializer_class = IncomeSettingForWomenOldSerializer
     pagination_class = GeneralIncomePagination

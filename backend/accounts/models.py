@@ -122,3 +122,21 @@ class IncomeSetting(models.Model):
 
     def __str__(self):
         return str(self.id)
+    
+class IncomeSettingForWomenOld(models.Model):
+    CATEGORY_TYPE = (
+        ('N/A','N/A'),
+        ('BPL','BPL'),
+        ('Handicap','Handicap'),
+        ('Child Below 18', 'Child Below 18'),
+        ('Mature Female', 'Mature Female'),
+        ('Senior Citizen', 'Senior Citizen')
+    )
+    category = models.CharField(max_length=15,choices=CATEGORY_TYPE,blank=True, null=True)
+    income = models.PositiveIntegerField(default=0,blank=True, null=True)
+    previous_income_for_women_old = models.PositiveIntegerField(default=0,blank=True, null=True)
+    created_date = models.DateField(auto_now_add=True)
+    updated_date = models.DateField(auto_now=True)
+    
+    def __str__(self):
+        return str(self.id)
