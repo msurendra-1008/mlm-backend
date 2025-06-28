@@ -9,8 +9,17 @@ from .models import(
     UserAddress,
     Cart,
     CartItem,
-    Wallet
+    Wallet,
+    Vendor,
 )
+
+
+class VendorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vendor
+        fields = ['id', 'name', 'email', 'mobile', 'address', 'created_at', 'is_approved']
+
+
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
