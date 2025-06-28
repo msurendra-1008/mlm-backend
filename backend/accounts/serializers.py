@@ -63,3 +63,19 @@ class IncomeSettingForWomenOldSerializer(serializers.ModelSerializer):
     class Meta:
         model = IncomeSettingForWomenOld
         fields = '__all__'
+        
+        
+#  show user list with their associated leg user data.
+class LegUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'uid_no', 'name', 'mobile')
+
+class CustomUserTreeSerializer(serializers.ModelSerializer):
+    left_leg = LegUserSerializer()
+    middle_leg = LegUserSerializer()
+    right_leg = LegUserSerializer()
+
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'uid_no', 'name', 'mobile', 'left_leg', 'middle_leg', 'right_leg')

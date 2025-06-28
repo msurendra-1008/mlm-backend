@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 from rest_framework.pagination import PageNumberPagination
 from .models import CustomUser, LegIncomeModel, IncomeSetting, IncomeSettingForWomenOld
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer, IncomeSettingSerializer, IncomeSettingForWomenOldSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer, IncomeSettingSerializer, IncomeSettingForWomenOldSerializer, CustomUserTreeSerializer
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import AllowAny
 
@@ -62,3 +62,8 @@ class IncomeSettingForWomenOldViewSet(viewsets.ModelViewSet):
     queryset = IncomeSettingForWomenOld.objects.all().order_by('-created_date')
     serializer_class = IncomeSettingForWomenOldSerializer
     pagination_class = GeneralIncomePagination
+    
+    
+class CustomUserTreeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserTreeSerializer

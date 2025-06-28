@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-=531#g2*7crfu_98!1do%5+jr72s(!pb!^rxj=q&!d-p3u5#n4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".vercel.app", ".now.sh", "127.0.0.1",]
+ALLOWED_HOSTS = [".vercel.app", ".now.sh", "127.0.0.1", 'b015-122-161-48-15.ngrok-free.app']
 
 
 # Application definition
@@ -179,5 +179,5 @@ CORS_ALLOWED_ORIGINS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 2  # or whatever number per page you want
+    'PAGE_SIZE': 10  # or whatever number per page you want
 }
