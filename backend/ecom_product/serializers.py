@@ -17,7 +17,7 @@ from .models import(
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
-        fields = ['id', 'name', 'email', 'mobile', 'address', 'created_at', 'is_approved']
+        fields = ['id', 'name', 'email', 'mobile', 'address', 'product', 'gst_number', 'created_at', 'is_approved']
 
 
 

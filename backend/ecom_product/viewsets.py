@@ -464,29 +464,24 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return Response({"transactions": serializer.data})  # Wrap the data in a dictionary
     
     
-class VendorViewSet(viewsets.ViewSet):
-    def create(self, request):
-        serializer = VendorSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class VendorViewSet(viewsets.ModelViewSet):
+    queryset = Vendor.objects.all()
+    serializer_class = VendorSerializer
 
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
         try:
-            vendor = Vendor.objects.get(pk=pk)
+            vendor = self.get_object()
             vendor.is_approved = True
             vendor.save()
-            serializer = VendorSerializer(vendor)
+            serializer = self.get_serializer(vendor)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Vendor.DoesNotExist:
             return Response({"error": "Vendor not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    def list(self, request):
-        approved_only = request.query_params.get('approved', 'false').lower() == 'true'
-        vendors = Vendor.objects.all()
+    def get_queryset(self):
+        approved_only = self.request.query_params.get('approved', 'false').lower() == 'true'
+        queryset = Vendor.objects.all()
         if approved_only:
-            vendors = vendors.filter(is_approved=True)
-        serializer = VendorSerializer(vendors, many=True)
-        return Response(serializer.data)
+            queryset = queryset.filter(is_approved=True)
+        return queryset

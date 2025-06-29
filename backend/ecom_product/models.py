@@ -10,6 +10,8 @@ class Vendor(models.Model):
     email = models.EmailField(unique=True)
     mobile = models.CharField(max_length=15)
     address = models.TextField()
+    product = models.TextField(blank=True, null=True)
+    gst_number = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
 
