@@ -5,10 +5,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.pagination import PageNumberPagination
 from django.db import transaction
 from django.db.models import F, Case, When, Prefetch
 from .models import *
 from .serializers import *
+
+
+
+class GeneralIncomePagination(PageNumberPagination):
+    page_size = 7
 
 class ProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = ProductCategory.objects.all()
@@ -485,3 +491,9 @@ class VendorViewSet(viewsets.ModelViewSet):
         if approved_only:
             queryset = queryset.filter(is_approved=True)
         return queryset
+    
+
+class TenderViewSet(viewsets.ModelViewSet):
+    queryset = Tender.objects.all().order_by('-created_at')
+    serializer_class = TenderSerializer
+    pagination_class = GeneralIncomePagination

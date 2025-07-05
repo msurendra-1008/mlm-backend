@@ -14,6 +14,7 @@ router.register(r'user-address', UserAddressViewSet, basename='user-address')
 router.register(r'wallet', WalletViewSet,basename='wallet')
 router.register(r'transactions', TransactionViewSet,basename='transaction')
 router.register(r'vendors', VendorViewSet, basename='vendors')
+router.register(r'tenders', TenderViewSet, basename='tenders')
 # router.register(r'cart-items', CartItemViewSet, basename='cart-item')
 
 urlpatterns = [

@@ -11,6 +11,7 @@ from .models import(
     CartItem,
     Wallet,
     Vendor,
+    Tender,
 )
 
 
@@ -18,7 +19,13 @@ class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = ['id', 'name', 'email', 'mobile', 'address', 'product', 'gst_number', 'created_at', 'is_approved']
+        
+        
 
+class TenderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tender
+        fields = ['id', 'tender_product_no', 'title', 'product_image', 'description', 'deadline', 'location', 'budget', 'status', 'tender_date', 'created_at']
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):

@@ -19,6 +19,22 @@ class Vendor(models.Model):
         return self.name
 
 
+class Tender(models.Model):
+    tender_product_no = models.PositiveIntegerField(unique=True,blank=True, null=True)
+    title = models.CharField(max_length=255)
+    product_image = models.ImageField(upload_to = "tender_product/image/",blank=True, null=True)
+    description = models.TextField()
+    deadline = models.DateTimeField()
+    location = models.CharField(max_length=255)
+    budget = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(
+        max_length=20,
+        choices=[("draft", "Draft"), ("open", "Open"), ("review", "Under Review"), ("awarded", "Awarded"), ("cancelled", "Cancelled")],
+        default="open"
+    )
+    tender_date = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 
 class ProductCategory(models.Model):
