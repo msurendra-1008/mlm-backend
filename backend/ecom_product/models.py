@@ -34,6 +34,19 @@ class Tender(models.Model):
     )
     tender_date = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+class TenderBid(models.Model):
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="bids")
+    tender = models.ForeignKey(Tender, on_delete=models.CASCADE, related_name="bids")
+    bid_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    bid_description = models.TextField(blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('vendor', 'tender')  # One bid per tender per vendor
+
+    def __str__(self):
+        return f"{self.vendor.name} - {self.tender.title}"
 
 
 

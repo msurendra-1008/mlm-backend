@@ -12,6 +12,7 @@ from .models import(
     Wallet,
     Vendor,
     Tender,
+    TenderBid,
 )
 
 
@@ -25,7 +26,12 @@ class VendorSerializer(serializers.ModelSerializer):
 class TenderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tender
-        fields = ['id', 'tender_product_no', 'title', 'product_image', 'description', 'deadline', 'location', 'budget', 'status', 'tender_date', 'created_at']
+        fields = ['id', 'tender_product_no', 'title', 'description', 'deadline', 'location', 'budget', 'status', 'tender_date', 'created_at']
+        
+class TenderBidSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TenderBid
+        fields = '__all__'
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):

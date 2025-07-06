@@ -3,6 +3,8 @@ from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import generics
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.pagination import PageNumberPagination
@@ -497,3 +499,29 @@ class TenderViewSet(viewsets.ModelViewSet):
     queryset = Tender.objects.all().order_by('-created_at')
     serializer_class = TenderSerializer
     pagination_class = GeneralIncomePagination
+    
+
+class OpenTendersView(generics.ListAPIView):
+    queryset = Tender.objects.filter(status='open', deadline__gt=timezone.now())
+    serializer_class = TenderSerializer
+
+
+class TenderBidViewSet(viewsets.ModelViewSet):
+    queryset = TenderBid.objects.all()
+    serializer_class = TenderBidSerializer
+
+    def create(self, request, *args, **kwargs):
+        vendor_email = request.data.get('vendor_email')
+        tender_id = request.data.get('tender_id')
+
+        vendor = Vendor.objects.filter(email=vendor_email, is_approved=True).first()
+        if not vendor:
+            return Response({"detail": "Vendor not found or not approved."}, status=400)
+
+        if TenderBid.objects.filter(vendor=vendor, tender_id=tender_id).exists():
+            return Response({"detail": "You have already submitted a bid for this tender."}, status=400)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(vendor=vendor)
+        return Response(serializer.data, status=201)
