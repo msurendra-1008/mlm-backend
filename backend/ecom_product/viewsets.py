@@ -518,7 +518,11 @@ class TenderBidViewSet(viewsets.ModelViewSet):
         if not vendor:
             return Response({"detail": "Vendor not found or not approved."}, status=400)
 
-        if TenderBid.objects.filter(vendor=vendor, tender_id=tender_id).exists():
+        tender = Tender.objects.filter(id=tender_id).first()
+        if not tender:
+            return Response({"detail": "Tender not found."}, status=400)
+
+        if TenderBid.objects.filter(vendor=vendor, tender=tender).exists():
             return Response({"detail": "You have already submitted a bid for this tender."}, status=400)
 
         serializer = self.get_serializer(data=request.data)
