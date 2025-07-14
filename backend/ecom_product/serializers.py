@@ -32,6 +32,7 @@ class TenderBidSerializer(serializers.ModelSerializer):
     class Meta:
         model = TenderBid
         fields = '__all__'
+        read_only_fields = ['vendor', 'tender', 'submitted_at']
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):

@@ -511,7 +511,7 @@ class TenderBidViewSet(viewsets.ModelViewSet):
     serializer_class = TenderBidSerializer
 
     def create(self, request, *args, **kwargs):
-        vendor_email = request.data.get('vendor_email')
+        vendor_email = request.data.get('vendor_email') 
         tender_id = request.data.get('tender_id')
 
         vendor = Vendor.objects.filter(email=vendor_email, is_approved=True).first()
@@ -523,5 +523,5 @@ class TenderBidViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(vendor=vendor)
+        serializer.save(vendor=vendor, tender=tender)
         return Response(serializer.data, status=201)
