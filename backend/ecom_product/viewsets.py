@@ -529,3 +529,18 @@ class TenderBidViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(vendor=vendor, tender=tender)
         return Response(serializer.data, status=201)
+    
+    @action(detail=True, methods=['post'])
+    def update_status(self, request, pk=None):
+        bid = self.get_object()
+        status = request.data.get('status')
+        negotiation_message = request.data.get('negotiation_message', '')
+
+        if status not in ['approved', 'rejected', 'negotiation']:
+            return Response({'detail': 'Invalid status.'}, status=400)
+
+        bid.status = status
+        bid.negotiation_message = negotiation_message if status == 'negotiation' else ''
+        bid.save()
+
+        return Response(self.get_serializer(bid).data)

@@ -36,17 +36,28 @@ class Tender(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
 class TenderBid(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('negotiation', 'Negotiation'),
+    ]
+
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="bids")
     tender = models.ForeignKey(Tender, on_delete=models.CASCADE, related_name="bids")
     bid_amount = models.DecimalField(max_digits=12, decimal_places=2)
     bid_description = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    negotiation_message = models.TextField(blank=True, null=True)
+
     class Meta:
-        unique_together = ('vendor', 'tender')  # One bid per tender per vendor
+        unique_together = ('vendor', 'tender')
 
     def __str__(self):
         return f"{self.vendor.name} - {self.tender.title}"
+
 
 
 
