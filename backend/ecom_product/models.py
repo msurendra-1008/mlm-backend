@@ -27,6 +27,7 @@ class Tender(models.Model):
     deadline = models.DateTimeField()
     location = models.CharField(max_length=255)
     budget = models.DecimalField(max_digits=12, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=0, blank=True, null=True)  # <-- Added field
     status = models.CharField(
         max_length=20,
         choices=[("draft", "Draft"), ("open", "Open"), ("review", "Under Review"), ("awarded", "Awarded"), ("cancelled", "Cancelled")],
@@ -47,6 +48,7 @@ class TenderBid(models.Model):
     tender = models.ForeignKey(Tender, on_delete=models.CASCADE, related_name="bids")
     bid_amount = models.DecimalField(max_digits=12, decimal_places=2)
     bid_description = models.TextField(blank=True, null=True)
+    quantity = models.PositiveIntegerField(default=0, blank=True, null=True)  # <-- Added field
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

@@ -26,7 +26,7 @@ class VendorSerializer(serializers.ModelSerializer):
 class TenderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tender
-        fields = ['id', 'tender_product_no', 'title', 'description', 'deadline', 'location', 'budget', 'status', 'tender_date', 'created_at']
+        fields = ['id', 'tender_product_no', 'title', 'description', 'deadline', 'location', 'budget', 'quantity', 'status', 'tender_date', 'created_at']
         
 class TenderBidSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
