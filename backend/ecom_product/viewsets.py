@@ -547,6 +547,12 @@ class TenderBidViewSet(viewsets.ModelViewSet):
     
 
 class TenderBidPreRequsitViewSet(viewsets.ViewSet):
+    
+    @action(detail=False, methods=['get'], url_path='awarded-status')
+    def awarded_tenders(self, request):
+        awarded_tenders = Tender.objects.filter(status="awarded")
+        serializer = TenderSerializer(awarded_tenders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='approved_bids')
     def approved_bids(self, request, pk=None):
