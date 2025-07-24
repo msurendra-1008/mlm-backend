@@ -544,3 +544,20 @@ class TenderBidViewSet(viewsets.ModelViewSet):
         bid.save()
 
         return Response(self.get_serializer(bid).data)
+    
+
+class TenderBidPreRequsitViewSet(viewsets.ViewSet):
+
+    @action(detail=True, methods=['get'], url_path='approved_bids')
+    def approved_bids(self, request, pk=None):
+        try:
+            tender = Tender.objects.get(id=pk)
+        except Tender.DoesNotExist:
+            return Response({"error": "Tender not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if tender.status != "awarded":
+            return Response({"error": "Tender is not awarded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        approved_bids = TenderBid.objects.filter(tender=tender, status="approved")
+        serializer = TenderBidSerializer(approved_bids, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
