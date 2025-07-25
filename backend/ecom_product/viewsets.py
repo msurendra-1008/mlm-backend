@@ -573,6 +573,13 @@ class RawProductListViewSet(viewsets.ModelViewSet):
     queryset = RawProductList.objects.all().order_by('-created_at')
     serializer_class = RawProductListSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        tender_bid = self.request.query_params.get('tender_bid')
+        if tender_bid:
+            queryset = queryset.filter(tender_bid_id=tender_bid)
+        return queryset
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         raw_list = self.get_object()
