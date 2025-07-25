@@ -567,3 +567,22 @@ class TenderBidPreRequsitViewSet(viewsets.ViewSet):
         approved_bids = TenderBid.objects.filter(tender=tender, status="approved")
         serializer = TenderBidSerializer(approved_bids, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RawProductListViewSet(viewsets.ModelViewSet):
+    queryset = RawProductList.objects.all().order_by('-created_at')
+    serializer_class = RawProductListSerializer
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        raw_list = self.get_object()
+        raw_list.status = 'approved'
+        raw_list.save()
+        return Response({'message': 'Raw list approved'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        raw_list = self.get_object()
+        raw_list.status = 'rejected'
+        raw_list.save()
+        return Response({'message': 'Raw list rejected'}, status=status.HTTP_200_OK)

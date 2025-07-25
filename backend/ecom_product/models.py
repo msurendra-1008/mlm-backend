@@ -59,6 +59,33 @@ class TenderBid(models.Model):
 
     def __str__(self):
         return f"{self.vendor.name} - {self.tender.title}"
+    
+
+class RawProductList(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    tender = models.ForeignKey("Tender", on_delete=models.CASCADE, related_name="raw_lists")
+    vendor = models.ForeignKey("Vendor", on_delete=models.CASCADE, related_name="raw_lists")
+    tender_bid = models.ForeignKey("TenderBid", on_delete=models.CASCADE, related_name="raw_lists")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"RawList ({self.status}) for {self.vendor.name} - {self.tender.title}"
+
+
+class RawProductListBatch(models.Model):
+    raw_list = models.ForeignKey(RawProductList, on_delete=models.CASCADE, related_name="batches")
+    delivery_date = models.DateField()
+    quantity = models.PositiveIntegerField()
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Batch {self.id} - Qty: {self.quantity} on {self.delivery_date}"
 
 
 

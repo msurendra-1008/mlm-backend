@@ -13,6 +13,8 @@ from .models import(
     Vendor,
     Tender,
     TenderBid,
+    RawProductList,
+    RawProductListBatch,
 )
 
 
@@ -36,6 +38,34 @@ class TenderBidSerializer(serializers.ModelSerializer):
         model = TenderBid
         fields = '__all__'
         read_only_fields = ['vendor', 'tender', 'submitted_at']
+
+
+class RawProductListBatchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RawProductListBatch
+        fields = ['id', 'delivery_date', 'quantity']
+
+class RawProductListSerializer(serializers.ModelSerializer):
+    batches = RawProductListBatchSerializer(many=True)
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+    tender_title = serializers.CharField(source='tender.title', read_only=True)
+
+    class Meta:
+        model = RawProductList
+        fields = ['id', 'tender', 'vendor', 'tender_bid', 'status', 'vendor_name', 'tender_title', 'created_at', 'batches']
+
+    def create(self, validated_data):
+        batches_data = validated_data.pop('batches')
+        raw_list = RawProductList.objects.create(**validated_data)
+        for batch_data in batches_data:
+            RawProductListBatch.objects.create(raw_list=raw_list, **batch_data)
+        return raw_list
+
+    def update(self, instance, validated_data):
+        # Allow only status to be updated directly for now
+        instance.status = validated_data.get('status', instance.status)
+        instance.save()
+        return instance
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
