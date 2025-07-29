@@ -79,6 +79,23 @@ class IncomeSettingForWomenOldViewSet(viewsets.ModelViewSet):
     queryset = IncomeSettingForWomenOld.objects.all().order_by('-created_date')
     serializer_class = IncomeSettingForWomenOldSerializer
     pagination_class = GeneralIncomePagination
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        old_income = instance.income
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        new_income = serializer.validated_data.get('income', old_income)
+
+        # If income is being changed, set previous_income_for_women_old to old_income
+        if new_income != old_income:
+            serializer.save(previous_income_for_women_old=old_income)
+        else:
+            serializer.save()
+
+        return Response(serializer.data)
     
     
 class CustomUserTreeViewSet(viewsets.ReadOnlyModelViewSet):
