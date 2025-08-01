@@ -16,7 +16,7 @@ from .serializers import *
 
 
 class GeneralIncomePagination(PageNumberPagination):
-    page_size = 7
+    page_size = 10
 
 class ProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = ProductCategory.objects.all()
