@@ -173,7 +173,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",  # for local dev
-    "https://42484e1f63a6.ngrok-free.app",
+    "https://ba5853bcb8ef.ngrok-free.app",
     "https://3000-firebase-mlm-frontendgit-1750587382279.cluster-w5vd22whf5gmav2vgkomwtc4go.cloudworkstations.dev"
 ]
 
