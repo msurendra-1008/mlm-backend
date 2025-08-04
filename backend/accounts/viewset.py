@@ -3,8 +3,21 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 from rest_framework.pagination import PageNumberPagination
-from .models import CustomUser, LegIncomeModel, IncomeSetting, IncomeSettingForWomenOld
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, LegIncomeModelSerializer, IncomeSettingSerializer, IncomeSettingForWomenOldSerializer, CustomUserTreeSerializer
+from .models import ( CustomUser, 
+                     LegIncomeModel, 
+                     IncomeSetting, 
+                     IncomeSettingForWomenOld, 
+                     DoubleIncomeSettingForBPLHandicap
+)
+from .serializers import (
+     UserRegistrationSerializer, 
+     UserLoginSerializer, 
+     LegIncomeModelSerializer, 
+     IncomeSettingSerializer, 
+     IncomeSettingForWomenOldSerializer, 
+     CustomUserTreeSerializer, 
+     DoubleIncomeSettingForBPLHandicapSerializer
+)
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import AllowAny
 
@@ -97,6 +110,28 @@ class IncomeSettingForWomenOldViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
     
+
+class IncomeSettingForBPLHandicapViewSet(viewsets.ModelViewSet):
+    queryset = DoubleIncomeSettingForBPLHandicap.objects.all().order_by('-created_date')
+    serializer_class = DoubleIncomeSettingForBPLHandicapSerializer
+    pagination_class = GeneralIncomePagination
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        old_income = instance.income
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        new_income = serializer.validated_data.get('income', old_income)
+
+        # If income is being changed, set previous_income to old_income
+        if new_income != old_income:
+            serializer.save(previous_income=old_income)
+        else:
+            serializer.save()
+
+        return Response(serializer.data)
     
 class CustomUserTreeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CustomUser.objects.all()

@@ -107,6 +107,7 @@ class LegIncomeModel(models.Model):
 class IncomeSetting(models.Model):
 
     CHILD_TYPE = (
+        ('N/A','N/A'),
         ('Normal','Normal'),
         ('BPL','BPL'),
         ('Handicap','Handicap')
@@ -135,6 +136,22 @@ class IncomeSettingForWomenOld(models.Model):
     category = models.CharField(max_length=15,choices=CATEGORY_TYPE,blank=True, null=True)
     income = models.PositiveIntegerField(default=0,blank=True, null=True)
     previous_income_for_women_old = models.PositiveIntegerField(default=0,blank=True, null=True)
+    created_date = models.DateField(auto_now_add=True)
+    updated_date = models.DateField(auto_now=True)
+    
+    def __str__(self):
+        return str(self.id)
+    
+
+class DoubleIncomeSettingForBPLHandicap(models.Model):
+    CATEGORY_TYPE = (
+        ('N/A','N/A'),
+        ('BPL','BPL'),
+        
+    )
+    category = models.CharField(max_length=15,choices=CATEGORY_TYPE,blank=True, null=True)
+    income = models.PositiveIntegerField(default=0,blank=True, null=True)
+    previous_income = models.PositiveIntegerField(default=0,blank=True, null=True)
     created_date = models.DateField(auto_now_add=True)
     updated_date = models.DateField(auto_now=True)
     

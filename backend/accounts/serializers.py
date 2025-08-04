@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import CustomUser, LegIncomeModel, IncomeSetting, IncomeSettingForWomenOld
+from .models import CustomUser, DoubleIncomeSettingForBPLHandicap, LegIncomeModel, IncomeSetting, IncomeSettingForWomenOld
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -65,6 +65,12 @@ class IncomeSettingForWomenOldSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
         
+class DoubleIncomeSettingForBPLHandicapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoubleIncomeSettingForBPLHandicap
+        fields = '__all__'
+
+
 #  show user list with their associated leg user data.
 class LegUserSerializer(serializers.ModelSerializer):
     class Meta:
