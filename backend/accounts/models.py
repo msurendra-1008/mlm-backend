@@ -147,6 +147,7 @@ class DoubleIncomeSettingForBPLHandicap(models.Model):
     CATEGORY_TYPE = (
         ('N/A','N/A'),
         ('BPL','BPL'),
+        ('Handicap','Handicap'),
         
     )
     category = models.CharField(max_length=15,choices=CATEGORY_TYPE,blank=True, null=True)
