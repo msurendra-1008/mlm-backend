@@ -608,6 +608,8 @@ class RawProductListViewSet(viewsets.ModelViewSet):
         grouped = defaultdict(lambda: {
             "tender_bid": None,
             "tender": None,
+            "tender_title": None,
+            "tender_product_no": None,  # Add this
             "vendor": None,
             "batch_lists": [],
             "approved_batches_count": 0
@@ -619,6 +621,8 @@ class RawProductListViewSet(viewsets.ModelViewSet):
                 grouped[tender_bid_id]["tender_bid"] = tender_bid_id
                 grouped[tender_bid_id]["tender"] = raw_list.tender_id
                 grouped[tender_bid_id]["vendor"] = raw_list.vendor_id
+                grouped[tender_bid_id]["tender_title"] = raw_list.tender.title
+                grouped[tender_bid_id]["tender_product_no"] = raw_list.tender.tender_product_no  # Add this
 
             # Serialize the RawProductList (reuse your serializer)
             serializer = RawProductListSerializer(raw_list)
