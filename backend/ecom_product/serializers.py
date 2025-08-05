@@ -49,10 +49,18 @@ class RawProductListSerializer(serializers.ModelSerializer):
     batches = RawProductListBatchSerializer(many=True)
     vendor_name = serializers.CharField(source='vendor.name', read_only=True)
     tender_title = serializers.CharField(source='tender.title', read_only=True)
+    approved_batches_count = serializers.SerializerMethodField()
 
     class Meta:
         model = RawProductList
-        fields = ['id', 'tender', 'vendor', 'tender_bid', 'status', 'vendor_name', 'tender_title', 'created_at', 'batches']
+        fields = [
+            'id', 'tender', 'vendor', 'tender_bid', 'status',
+            'vendor_name', 'tender_title', 'created_at', 'batches',
+            'approved_batches_count'
+        ]
+
+    def get_approved_batches_count(self, obj):
+        return obj.batches.count()
 
     def create(self, validated_data):
         batches_data = validated_data.pop('batches')
@@ -66,7 +74,7 @@ class RawProductListSerializer(serializers.ModelSerializer):
         instance.status = validated_data.get('status', instance.status)
         instance.save()
         return instance
-
+    
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:

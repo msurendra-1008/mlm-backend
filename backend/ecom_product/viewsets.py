@@ -1,3 +1,4 @@
+from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 from django.forms import ValidationError
 from rest_framework import viewsets, status
@@ -509,6 +510,7 @@ class OpenTendersView(generics.ListAPIView):
 class TenderBidViewSet(viewsets.ModelViewSet):
     queryset = TenderBid.objects.all()
     serializer_class = TenderBidSerializer
+    pagination_class = GeneralIncomePagination
 
     def create(self, request, *args, **kwargs):
         vendor_email = request.data.get('vendor_email') 
@@ -572,6 +574,7 @@ class TenderBidPreRequsitViewSet(viewsets.ViewSet):
 class RawProductListViewSet(viewsets.ModelViewSet):
     queryset = RawProductList.objects.all().order_by('-created_at')
     serializer_class = RawProductListSerializer
+    pagination_class = GeneralIncomePagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -593,3 +596,41 @@ class RawProductListViewSet(viewsets.ModelViewSet):
         raw_list.status = 'rejected'
         raw_list.save()
         return Response({'message': 'Raw list rejected'}, status=status.HTTP_200_OK)
+
+    # @action(detail=False, methods=['get'], url_path='approved-lists')
+    # def approved_lists(self, request):
+    #     approved_lists = RawProductList.objects.filter(status='approved')
+    #     serializer = RawProductListSerializer(approved_lists, many=True)
+    #     return Response(serializer.data)
+    @action(detail=False, methods=['get'], url_path='approved-lists')
+    def approved_lists(self, request):
+        approved_lists = RawProductList.objects.filter(status='approved')
+        grouped = defaultdict(lambda: {
+            "tender_bid": None,
+            "tender": None,
+            "vendor": None,
+            "batch_lists": [],
+            "approved_batches_count": 0
+        })
+
+        for raw_list in approved_lists:
+            tender_bid_id = raw_list.tender_bid_id
+            if grouped[tender_bid_id]["tender_bid"] is None:
+                grouped[tender_bid_id]["tender_bid"] = tender_bid_id
+                grouped[tender_bid_id]["tender"] = raw_list.tender_id
+                grouped[tender_bid_id]["vendor"] = raw_list.vendor_id
+
+            # Serialize the RawProductList (reuse your serializer)
+            serializer = RawProductListSerializer(raw_list)
+            grouped[tender_bid_id]["batch_lists"].append(serializer.data)
+            # Add the number of batches for this list
+            grouped[tender_bid_id]["approved_batches_count"] += raw_list.batches.count()
+        grouped_list = list(grouped.values())
+
+        # Apply pagination
+        page = self.paginate_queryset(grouped_list)
+        if page is not None:
+            return self.get_paginated_response(page)
+        return Response(grouped_list)
+
+        # return Response(list(grouped.values()))
