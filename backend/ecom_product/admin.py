@@ -1,7 +1,22 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import ProductCategory, Product, ProductImage, Cart, CartItem, UserAddress, Payment, Wallet, Transaction, Vendor, Tender, TenderBid
+from .models import ( 
+    ProductCategory,
+    Product,
+    ProductImage,
+    Cart, 
+    CartItem, 
+    UserAddress , 
+    Payment, 
+    Wallet, 
+    Transaction, 
+    Vendor, 
+    Tender, 
+    TenderBid,
+    RawProductList,
+    RawProductListBatch
+)
 
 admin.site.register(ProductCategory)
 admin.site.register(Product)
@@ -15,3 +30,5 @@ admin.site.register(Transaction)
 admin.site.register(Vendor)
 admin.site.register(Tender)
 admin.site.register(TenderBid)
+admin.site.register(RawProductList)
+admin.site.register(RawProductListBatch)

@@ -637,4 +637,202 @@ class RawProductListViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(page)
         return Response(grouped_list)
 
-        # return Response(list(grouped.values()))
+    @action(detail=False, methods=['get'], url_path='by-tenderbid/(?P<tenderbid_id>[^/]+)')
+    def by_tenderbid(self, request, tenderbid_id=None):
+        # Filter RawProductList by tender_bid and status approved
+        raw_lists = RawProductList.objects.filter(tender_bid_id=tenderbid_id, status='approved')
+        serializer = RawProductListSerializer(raw_lists, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='batches-list-by-tenderbid/(?P<tenderbid_id>[^/]+)')
+    def batches_list_by_tenderbid(self, request, tenderbid_id=None):
+        # Get all approved RawProductList for this tenderbid
+        '''
+        For send email making list of all batches and then send email to vendor
+
+        {
+            "tender": 9,
+            "tender_title": "milk PRODUCT",
+            "vendor": 3,
+            "vendor_name": "Test User1",
+            "tender_bid": 7,
+            "batches_list": [
+                {
+                    "id": 1,
+                    "delivery_date": "2025-08-14",
+                    "quantity": 100
+                },
+                {
+                    "id": 2,
+                    "delivery_date": "2025-08-16",
+                    "quantity": 200
+                },
+                {
+                    "id": 3,
+                    "delivery_date": "2025-08-18",
+                    "quantity": 200
+                }
+            ]
+        }
+        
+        '''
+        raw_lists = RawProductList.objects.filter(tender_bid_id=tenderbid_id, status='approved')
+        if not raw_lists.exists():
+            return Response({"detail": "No approved lists found for this tenderbid."}, status=404)
+
+        # Get shared info from the first RawProductList (since all have the same tender, vendor, tender_bid)
+        first = raw_lists.first()
+        tender_id = first.tender_id
+        vendor_id = first.vendor_id
+        tender_bid_id = first.tender_bid_id
+        tender_title = first.tender.title
+        vendor_name = first.vendor.name
+
+        # Collect all batches
+        batches = []
+        for raw_list in raw_lists:
+            for batch in raw_list.batches.all():
+                batches.append({
+                    "id": batch.id,
+                    "delivery_date": batch.delivery_date,
+                    "quantity": batch.quantity
+                })
+
+        result = {
+            "tender": tender_id,
+            "tender_title": tender_title,
+            "vendor": vendor_id,
+            "vendor_name": vendor_name,
+            "tender_bid": tender_bid_id,
+            "batches_list": batches
+        }
+        return Response(result)
+
+    @action(detail=False, methods=['post'], url_path='send-batches-email/(?P<tenderbid_id>[^/]+)')
+    def send_batches_email(self, request, tenderbid_id=None):
+        raw_lists = RawProductList.objects.filter(tender_bid_id=tenderbid_id, status='approved')
+        if not raw_lists.exists():
+            return Response({"detail": "No approved lists found for this tenderbid."}, status=404)
+
+        first = raw_lists.first()
+        vendor_email = first.vendor.email
+        vendor_name = first.vendor.name
+        tender_title = first.tender.title
+        tender_bid_id = first.tender_bid_id
+
+        # Collect all unsent batches
+        batches = []
+        batch_ids = []
+        for raw_list in raw_lists:
+            for batch in raw_list.batches.filter(sent_to_vendor=False):
+                batches.append(batch)
+                batch_ids.append(batch.id)
+
+        if not batches:
+            return Response({"detail": "No unsent batches to email."}, status=400)
+
+        # Compose email
+        subject = f"Batch Packing Details for Tender: {tender_title}"
+        batch_lines = [
+            f"- Batch ID: {batch.id}, Delivery Date: {batch.delivery_date}, Quantity: {batch.quantity}"
+            for batch in batches
+        ]
+        batch_details = "\n".join(batch_lines)
+        message = (
+            f"Dear {vendor_name},\n\n"
+            f"We are pleased to inform you that the following batches for your tender bid (ID: {tender_bid_id}) have been approved and are ready for packing:\n\n"
+            f"{batch_details}\n\n"
+            "Please proceed with the necessary arrangements for these batches.\n\n"
+            "If you have any questions or require further information, feel free to contact us.\n\n"
+            "Best regards,\n"
+            "Your Company Name\n"
+            "Contact: support@yourcompany.com"
+        )
+
+        # Send email (replace with your actual email sending logic)
+        from django.core.mail import send_mail
+        send_mail(subject, message, 'your_email@example.com', [vendor_email])
+
+        # Mark batches as sent
+        RawProductListBatch.objects.filter(id__in=batch_ids).update(sent_to_vendor=True)
+
+        return Response({
+            "detail": "Email sent successfully.",
+            "batches_sent": batch_ids
+        })
+
+    @action(detail=False, methods=['get'], url_path='batches-pdf-by-tenderbid/(?P<tenderbid_id>[^/]+)')
+    def batches_pdf_by_tenderbid(self, request, tenderbid_id=None):
+        from django.http import HttpResponse
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib import colors
+        from reportlab.platypus import Table, TableStyle
+        import io
+
+        raw_lists = RawProductList.objects.filter(tender_bid_id=tenderbid_id, status='approved')
+        if not raw_lists.exists():
+            return Response({"detail": "No approved lists found for this tenderbid."}, status=404)
+
+        first = raw_lists.first()
+        vendor_name = first.vendor.name
+        tender_title = first.tender.title
+        tender_bid_id = first.tender_bid_id
+
+        # Collect all batches (no sent_to_vendor filter)
+        batches = []
+        total_quantity = 0
+        for raw_list in raw_lists:
+            for batch in raw_list.batches.all():
+                batches.append(batch)
+                total_quantity += batch.quantity
+
+        if not batches:
+            return Response({"detail": "No batches to include in PDF."}, status=400)
+
+        # Create PDF in memory
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        width, height = letter
+        y = height - 50
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(50, y, f"Batch Packing Details for Tender: {tender_title}")
+        y -= 30
+        p.setFont("Helvetica", 12)
+        p.drawString(50, y, f"Vendor: {vendor_name}")
+        y -= 20
+        p.drawString(50, y, f"Tender Bid ID: {tender_bid_id}")
+        y -= 30
+
+        # Prepare table data
+        table_data = [["Batch ID", "Delivery Date", "Quantity"]]
+        for batch in batches:
+            table_data.append([str(batch.id), str(batch.delivery_date), str(batch.quantity)])
+        # Add total row
+        table_data.append(["", "Total", str(total_quantity)])
+
+        # Create table
+        table = Table(table_data, colWidths=[100, 150, 100])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+        ]))
+
+        # Render table
+        table.wrapOn(p, width, height)
+        table_height = 20 * (len(table_data))
+        table.drawOn(p, 50, y - table_height)
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="batches_tenderbid_{tender_bid_id}.pdf"'
+        return response
