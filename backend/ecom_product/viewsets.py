@@ -871,8 +871,10 @@ class ReceivedOrderViewSet(viewsets.ModelViewSet):
 class FaultyItemViewSet(viewsets.ModelViewSet):
     queryset = FaultyItem.objects.all().order_by('-reported_at')
     serializer_class = FaultyItemSerializer
+    pagination_class = GeneralIncomePagination
 
 
 class AcceptedProductViewSet(viewsets.ModelViewSet):
     queryset = AcceptedProduct.objects.all().order_by('-accepted_at')
     serializer_class = AcceptedProductSerializer
+    pagination_class = GeneralIncomePagination
