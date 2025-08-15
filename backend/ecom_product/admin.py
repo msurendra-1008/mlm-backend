@@ -15,7 +15,10 @@ from .models import (
     Tender, 
     TenderBid,
     RawProductList,
-    RawProductListBatch
+    RawProductListBatch,
+    ReceivedOrder,
+    FaultyItem,
+    AcceptedProduct
 )
 
 admin.site.register(ProductCategory)
@@ -32,3 +35,6 @@ admin.site.register(Tender)
 admin.site.register(TenderBid)
 admin.site.register(RawProductList)
 admin.site.register(RawProductListBatch)
+admin.site.register(ReceivedOrder)
+admin.site.register(FaultyItem)
+admin.site.register(AcceptedProduct)

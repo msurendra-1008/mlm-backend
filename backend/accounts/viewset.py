@@ -66,7 +66,7 @@ class LegIncomeModelViewSet(viewsets.ModelViewSet):
 class GeneralIncomePagination(PageNumberPagination):
     page_size = 10
 class IncomeSettingViewSet(viewsets.ModelViewSet):
-    queryset = IncomeSetting.objects.all().order_by('-created_date')
+    queryset = IncomeSetting.objects.all().order_by('created_date')
     serializer_class = IncomeSettingSerializer
     pagination_class = GeneralIncomePagination
 
@@ -89,7 +89,7 @@ class IncomeSettingViewSet(viewsets.ModelViewSet):
     
 
 class IncomeSettingForWomenOldViewSet(viewsets.ModelViewSet):
-    queryset = IncomeSettingForWomenOld.objects.all().order_by('-created_date')
+    queryset = IncomeSettingForWomenOld.objects.all().order_by('created_date')
     serializer_class = IncomeSettingForWomenOldSerializer
     pagination_class = GeneralIncomePagination
 
@@ -112,7 +112,7 @@ class IncomeSettingForWomenOldViewSet(viewsets.ModelViewSet):
     
 
 class IncomeSettingForBPLHandicapViewSet(viewsets.ModelViewSet):
-    queryset = DoubleIncomeSettingForBPLHandicap.objects.all().order_by('-created_date')
+    queryset = DoubleIncomeSettingForBPLHandicap.objects.all().order_by('created_date')
     serializer_class = DoubleIncomeSettingForBPLHandicapSerializer
     pagination_class = GeneralIncomePagination
 

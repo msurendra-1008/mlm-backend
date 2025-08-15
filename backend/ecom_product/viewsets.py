@@ -836,3 +836,43 @@ class RawProductListViewSet(viewsets.ModelViewSet):
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="batches_tenderbid_{tender_bid_id}.pdf"'
         return response
+
+
+class ReceivedOrderViewSet(viewsets.ModelViewSet):
+    queryset = ReceivedOrder.objects.all().order_by('-received_at')
+    serializer_class = ReceivedOrderSerializer
+
+    @action(detail=True, methods=['post'], url_path='inspect')
+    def inspect_order(self, request, pk=None):
+        order = self.get_object()
+        inspection_status = request.data.get('inspection_status')
+        if inspection_status not in ['inspected']:
+            return Response({'detail': 'Invalid inspection status.'}, status=400)
+        order.inspection_status = inspection_status
+        order.save()
+        return Response(self.get_serializer(order).data)
+
+    @action(detail=False, methods=['get'], url_path='filter-batches')
+    def filter_batches(self, request):
+        vendor_id = request.query_params.get('vendor_id')
+        tender_id = request.query_params.get('tender_id')
+        
+        if vendor_id and tender_id:
+            batches = RawProductListBatch.objects.filter(
+                raw_list__vendor_id=vendor_id,
+                raw_list__tender_id=tender_id
+            )
+            serializer = RawProductListBatchSerializer(batches, many=True)
+            return Response(serializer.data)
+        
+        return Response({"detail": "Vendor and Tender IDs are required."}, status=400)
+
+
+class FaultyItemViewSet(viewsets.ModelViewSet):
+    queryset = FaultyItem.objects.all().order_by('-reported_at')
+    serializer_class = FaultyItemSerializer
+
+
+class AcceptedProductViewSet(viewsets.ModelViewSet):
+    queryset = AcceptedProduct.objects.all().order_by('-accepted_at')
+    serializer_class = AcceptedProductSerializer

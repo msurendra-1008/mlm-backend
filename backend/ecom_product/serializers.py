@@ -15,6 +15,9 @@ from .models import(
     TenderBid,
     RawProductList,
     RawProductListBatch,
+    ReceivedOrder,
+    FaultyItem,
+    AcceptedProduct,
 )
 
 
@@ -74,6 +77,38 @@ class RawProductListSerializer(serializers.ModelSerializer):
         instance.status = validated_data.get('status', instance.status)
         instance.save()
         return instance
+
+
+class ReceivedOrderSerializer(serializers.ModelSerializer):
+    tender_title = serializers.CharField(source='tender.title', read_only=True)
+    tender_product_no = serializers.CharField(source='tender.tender_product_no', read_only=True)
+
+    class Meta:
+        model = ReceivedOrder
+        fields = [
+            'id', 'vendor', 'tender', 'tender_title', 'tender_product_no', 
+            'batch', 'received_quantity', 'received_at', 'inspection_status', 'updated_at'
+        ]
+
+
+class FaultyItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FaultyItem
+        fields = [
+            'id', 'received_order', 'description', 'faulty_quantity', 
+            'reported_at', 'updated_at'
+        ]
+
+
+class AcceptedProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcceptedProduct
+        fields = [
+            'id', 'received_order', 'description', 'accepted_quantity', 
+            'accepted_at', 'updated_at'
+        ]
+
+
     
 
 class ProductCategorySerializer(serializers.ModelSerializer):

@@ -35,7 +35,10 @@ class Tender(models.Model):
     )
     tender_date = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+    def __str__(self):
+        return f"{self.title} (Product No: {self.tender_product_no})"
+
 class TenderBid(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -59,7 +62,7 @@ class TenderBid(models.Model):
 
     def __str__(self):
         return f"{self.vendor.name} - {self.tender.title}"
-    
+
 
 class RawProductList(models.Model):
     STATUS_CHOICES = [
@@ -88,6 +91,39 @@ class RawProductListBatch(models.Model):
         return f"Batch {self.id} - Qty: {self.quantity} on {self.delivery_date}"
 
 
+class ReceivedOrder(models.Model):
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="received_orders")
+    tender = models.ForeignKey(Tender, on_delete=models.CASCADE, related_name="received_orders")
+    batch = models.ForeignKey(RawProductListBatch, on_delete=models.CASCADE, related_name="received_orders")
+    received_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    inspection_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('inspected', 'Inspected')], default='pending')
+    received_quantity = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"Order for {self.tender.title} from {self.vendor.name}"
+
+
+class FaultyItem(models.Model):
+    received_order = models.ForeignKey(ReceivedOrder, on_delete=models.CASCADE, related_name="faulty_items")
+    description = models.TextField()
+    reported_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    faulty_quantity = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"Faulty item in order {self.received_order.id}"
+
+
+class AcceptedProduct(models.Model):
+    received_order = models.ForeignKey(ReceivedOrder, on_delete=models.CASCADE, related_name="accepted_products")
+    description = models.TextField()
+    accepted_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    accepted_quantity = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"Accepted product in order {self.received_order.id}"
 
 
 class ProductCategory(models.Model):
@@ -98,7 +134,7 @@ class ProductCategory(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 class Product(models.Model):
     upc = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=200)
@@ -117,7 +153,7 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='product_images/')
@@ -144,7 +180,7 @@ class UserAddress(models.Model):
 
     def __str__(self):
         return f"{self.house_no}, {self.street}, {self.city}, {self.postal_code}, {self.country}"
-    
+
 class Cart(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -152,7 +188,7 @@ class Cart(models.Model):
 
     def __str__(self):
         return f"Cart for {self.user.mobile}"
-    
+
 class CartItem(models.Model):
     STATUS_CHOICES = [
         ('ordered', 'Ordered'),
@@ -170,7 +206,7 @@ class CartItem(models.Model):
     def __str__(self):
         product_names = ", ".join([product.name for product in self.product.all()])
         return f"{self.quantity} x [{product_names}] - {self.status}"
-    
+
 # class Order(models.Model):
 #     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 #     created_at = models.DateTimeField(auto_now_add=True)
@@ -197,7 +233,7 @@ class Payment(models.Model):
         ('success', 'Success'),
         ('failed', 'Failed'),
     ]
-    
+
     cart_item = models.ForeignKey(CartItem, on_delete=models.CASCADE, related_name='payments')
     payment_id = models.CharField(max_length=100, unique=True)
     order_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -226,7 +262,7 @@ class Wallet(models.Model):
 
     def __str__(self):
         return f"Wallet for {self.user.mobile} - Balance: {self.balance}"
-    
+
 
 class Transaction(models.Model):
     TRANSACTION_TYPES = [

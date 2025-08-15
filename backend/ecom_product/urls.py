@@ -18,6 +18,9 @@ router.register(r'tenders', TenderViewSet, basename='tenders')
 router.register(r'tender-bids', TenderBidViewSet, basename='tender-bids')
 router.register(r'awarded-tender', TenderBidPreRequsitViewSet, basename='awarded-tender')
 router.register(r'raw-product-list', RawProductListViewSet, basename='raw-product-list')
+router.register(r'received-orders', ReceivedOrderViewSet, basename='received-orders')
+router.register(r'faulty-items', FaultyItemViewSet, basename='faulty-items')
+router.register(r'accepted-products', AcceptedProductViewSet, basename='accepted-products')
 # router.register(r'cart-items', CartItemViewSet, basename='cart-item')
 
 urlpatterns = [
