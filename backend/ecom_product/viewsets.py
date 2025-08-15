@@ -841,6 +841,7 @@ class RawProductListViewSet(viewsets.ModelViewSet):
 class ReceivedOrderViewSet(viewsets.ModelViewSet):
     queryset = ReceivedOrder.objects.all().order_by('-received_at')
     serializer_class = ReceivedOrderSerializer
+    pagination_class = GeneralIncomePagination
 
     @action(detail=True, methods=['post'], url_path='inspect')
     def inspect_order(self, request, pk=None):
