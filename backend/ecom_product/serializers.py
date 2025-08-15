@@ -82,11 +82,12 @@ class RawProductListSerializer(serializers.ModelSerializer):
 class ReceivedOrderSerializer(serializers.ModelSerializer):
     tender_title = serializers.CharField(source='tender.title', read_only=True)
     tender_product_no = serializers.CharField(source='tender.tender_product_no', read_only=True)
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
 
     class Meta:
         model = ReceivedOrder
         fields = [
-            'id', 'vendor', 'tender', 'tender_title', 'tender_product_no', 
+            'id', 'vendor', 'vendor_name', 'tender', 'tender_title', 'tender_product_no', 
             'batch', 'received_quantity', 'received_at', 'inspection_status', 'updated_at'
         ]
 
