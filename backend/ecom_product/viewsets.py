@@ -869,6 +869,21 @@ class ReceivedOrderViewSet(viewsets.ModelViewSet):
         
         return Response({"detail": "Vendor and Tender IDs are required."}, status=400)
 
+    @action(detail=False, methods=['get'], url_path='filter-raw-lists')
+    def filter_raw_lists(self, request):
+        vendor_id = request.query_params.get('vendor_id')
+        tender_id = request.query_params.get('tender_id')
+        
+        if vendor_id and tender_id:
+            raw_lists = RawProductList.objects.filter(
+                vendor_id=vendor_id,
+                tender_id=tender_id
+            )
+            serializer = RawProductListSerializer(raw_lists, many=True)
+            return Response(serializer.data)
+        
+        return Response({"detail": "Vendor and Tender IDs are required."}, status=400)
+
 
 class FaultyItemViewSet(viewsets.ModelViewSet):
     queryset = FaultyItem.objects.all().order_by('reported_at')
