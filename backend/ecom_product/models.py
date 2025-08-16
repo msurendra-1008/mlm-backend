@@ -95,6 +95,7 @@ class ReceivedOrder(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name="received_orders")
     tender = models.ForeignKey(Tender, on_delete=models.CASCADE, related_name="received_orders")
     raw_list = models.ForeignKey(RawProductList, on_delete=models.CASCADE, related_name="received_orders")
+    batch = models.ForeignKey(RawProductListBatch, on_delete=models.CASCADE, related_name="received_orders", null=True, blank=True)  # New field
     received_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     inspection_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('inspected', 'Inspected')], default='pending')

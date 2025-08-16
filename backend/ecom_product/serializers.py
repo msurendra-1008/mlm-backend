@@ -88,7 +88,7 @@ class ReceivedOrderSerializer(serializers.ModelSerializer):
         model = ReceivedOrder
         fields = [
             'id', 'vendor', 'vendor_name', 'tender', 'tender_title', 'tender_product_no', 
-            'raw_list', 'received_quantity', 'received_at', 'inspection_status', 'updated_at'
+            'raw_list', 'batch', 'received_quantity', 'received_at', 'inspection_status', 'updated_at'
         ]
 
 
