@@ -859,10 +859,11 @@ class ReceivedOrderViewSet(viewsets.ModelViewSet):
         tender_id = request.query_params.get('tender_id')
         
         if vendor_id and tender_id:
-            batches = RawProductListBatch.objects.filter(
-                raw_list__vendor_id=vendor_id,
-                raw_list__tender_id=tender_id
+            raw_lists = RawProductList.objects.filter(
+                vendor_id=vendor_id,
+                tender_id=tender_id
             )
+            batches = RawProductListBatch.objects.filter(raw_list__in=raw_lists)
             serializer = RawProductListBatchSerializer(batches, many=True)
             return Response(serializer.data)
         
