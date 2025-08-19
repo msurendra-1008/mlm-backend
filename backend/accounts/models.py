@@ -126,16 +126,17 @@ class IncomeSetting(models.Model):
     
 class IncomeSettingForWomenOld(models.Model):
     CATEGORY_TYPE = (
-        ('N/A','N/A'),
-        ('BPL','BPL'),
-        ('Handicap','Handicap'),
-        ('Child Below 18', 'Child Below 18'),
-        ('Mature Female', 'Mature Female'),
-        ('Senior Citizen', 'Senior Citizen')
+        ('Childhood (7-12 year)', 'Childhood (7-12 year)'),
+        ('Teenager (13-18 years)', 'Teenager (13-18 years)'),
+        ('Young Male (19-39 years)', 'Young Male (19-39 years)'),
+        ('Young Female (19-39 years)', 'Young Female (19-39 years)'),
+        ('Mature Male (40-59 years)', 'Mature Male (40-59 years)'),
+        ('Mature Female (40-59 years)', 'Mature Female (40-59 years)'),
+        ('Senior Citizen (60 years and above)', 'Senior Citizen (60 years and above)')
     )
-    category = models.CharField(max_length=15,choices=CATEGORY_TYPE,blank=True, null=True)
-    income = models.PositiveIntegerField(default=0,blank=True, null=True)
-    previous_income_for_women_old = models.PositiveIntegerField(default=0,blank=True, null=True)
+    category = models.CharField(max_length=50, choices=CATEGORY_TYPE, blank=True, null=True)
+    income = models.PositiveIntegerField(default=0, blank=True, null=True)
+    previous_income_for_women_old = models.PositiveIntegerField(default=0, blank=True, null=True)
     created_date = models.DateField(auto_now_add=True)
     updated_date = models.DateField(auto_now=True)
     
@@ -145,7 +146,6 @@ class IncomeSettingForWomenOld(models.Model):
 
 class DoubleIncomeSettingForBPLHandicap(models.Model):
     CATEGORY_TYPE = (
-        ('N/A','N/A'),
         ('BPL','BPL'),
         ('Handicap','Handicap'),
         

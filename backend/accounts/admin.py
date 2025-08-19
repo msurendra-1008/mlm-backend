@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, IncomeSetting, IncomeSettingForWomenOld, DoubleIncomeSettingForBPLHandicap
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -23,3 +23,6 @@ class CustomUserAdmin(UserAdmin):
     ordering = ('mobile',)
 
 admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(IncomeSetting)
+admin.site.register(IncomeSettingForWomenOld)
+admin.site.register(DoubleIncomeSettingForBPLHandicap)
