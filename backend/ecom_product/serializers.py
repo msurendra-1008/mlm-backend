@@ -102,10 +102,11 @@ class FaultyItemSerializer(serializers.ModelSerializer):
 
 
 class AcceptedProductSerializer(serializers.ModelSerializer):
+    received_order_details = ReceivedOrderSerializer(source='received_order', read_only=True)
     class Meta:
         model = AcceptedProduct
         fields = [
-            'id', 'received_order', 'description', 'accepted_quantity', 
+            'id', 'received_order', 'received_order_details', 'description', 'accepted_quantity', 
             'accepted_at', 'updated_at'
         ]
 
