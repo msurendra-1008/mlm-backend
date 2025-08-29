@@ -474,7 +474,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     
     
 class VendorViewSet(viewsets.ModelViewSet):
-    queryset = Vendor.objects.all()
+    queryset = Vendor.objects.all().order_by('created_at')
     serializer_class = VendorSerializer
 
     @action(detail=True, methods=['post'], url_path='approve')
@@ -490,13 +490,13 @@ class VendorViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         approved_only = self.request.query_params.get('approved', 'false').lower() == 'true'
-        queryset = Vendor.objects.all()
+        queryset = Vendor.objects.all().order_by('created_at')
         if approved_only:
             queryset = queryset.filter(is_approved=True)
         return queryset
 
 class VendorProductDetailsViewSet(viewsets.ModelViewSet):
-    queryset = VendorProductDetails.objects.all()
+    queryset = VendorProductDetails.objects.all().order_by('created_at')
     serializer_class = VendorProductDetailsSerializer
 
 
