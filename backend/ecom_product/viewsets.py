@@ -496,7 +496,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         return queryset
 
 class VendorProductDetailsViewSet(viewsets.ModelViewSet):
-    queryset = VendorProductDetails.objects.all().order_by('created_at')
+    queryset = VendorProductDetails.objects.all()
     serializer_class = VendorProductDetailsSerializer
 
 
