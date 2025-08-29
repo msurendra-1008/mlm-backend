@@ -31,7 +31,7 @@ class VendorProductDetails(models.Model):
     vendor = models.ForeignKey('Vendor', on_delete=models.CASCADE, related_name='vedndor_product_details')
     product_brand_name = models.CharField(max_length=100)
     product_name = models.CharField(max_length=100)
-    product_image = models.ImageField(upload_to='vendor_products/images/')
+    product_image = models.ImageField(upload_to='vendor_products/images/', blank=True, null=True)
     size_packing = models.CharField(max_length=50)
     unit_per_mks = models.CharField(max_length=50)
     price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)

@@ -499,6 +499,12 @@ class VendorProductDetailsViewSet(viewsets.ModelViewSet):
     queryset = VendorProductDetails.objects.all()
     serializer_class = VendorProductDetailsSerializer
 
+    @action(detail=False, methods=['get'], url_path='by-vendor/(?P<vendor_id>[^/]+)')
+    def list_by_vendor(self, request, vendor_id=None):
+        products = VendorProductDetails.objects.filter(vendor_id=vendor_id)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
 
 class TenderViewSet(viewsets.ModelViewSet):
     queryset = Tender.objects.all().order_by('-created_at')
