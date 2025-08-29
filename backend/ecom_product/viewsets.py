@@ -494,7 +494,11 @@ class VendorViewSet(viewsets.ModelViewSet):
         if approved_only:
             queryset = queryset.filter(is_approved=True)
         return queryset
-    
+
+class VendorProductDetailsViewSet(viewsets.ModelViewSet):
+    queryset = VendorProductDetails.objects.all()
+    serializer_class = VendorProductDetailsSerializer
+
 
 class TenderViewSet(viewsets.ModelViewSet):
     queryset = Tender.objects.all().order_by('-created_at')

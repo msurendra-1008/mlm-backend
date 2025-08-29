@@ -21,6 +21,7 @@ router.register(r'raw-product-list', RawProductListViewSet, basename='raw-produc
 router.register(r'received-orders', ReceivedOrderViewSet, basename='received-orders')
 router.register(r'faulty-items', FaultyItemViewSet, basename='faulty-items')
 router.register(r'accepted-products', AcceptedProductViewSet, basename='accepted-products')
+router.register(r'vendor-product-details', VendorProductDetailsViewSet, basename='vendor-product-details')
 # router.register(r'cart-items', CartItemViewSet, basename='cart-item')
 
 urlpatterns = [

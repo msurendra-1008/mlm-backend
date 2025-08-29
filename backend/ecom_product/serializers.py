@@ -18,15 +18,25 @@ from .models import(
     ReceivedOrder,
     FaultyItem,
     AcceptedProduct,
+    VendorProductDetails,
 )
 
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
-        fields = ['id', 'name', 'email', 'mobile', 'address', 'product', 'gst_number', 'created_at', 'is_approved']
-        
-        
+        fields = [
+            'id', 'name', 'vendor_code', 'firm_name', 'firm_image', 'website_app_link',
+            'firm_description', 'contact_person_name', 'contact_person_designation',
+            'contact_person_mobile', 'contact_person_email', 'email', 'mobile',
+            'address', 'product', 'gst_number', 'created_at', 'is_approved'
+        ]
+
+class VendorProductDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VendorProductDetails
+        fields = '__all__'
+
 
 class TenderSerializer(serializers.ModelSerializer):
     class Meta:

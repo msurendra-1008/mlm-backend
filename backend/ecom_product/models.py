@@ -7,6 +7,15 @@ from django.utils.translation import gettext_lazy as _
 
 class Vendor(models.Model):
     name = models.CharField(max_length=100)
+    vendor_code = models.CharField(max_length=50, unique=True, blank=True, null=True)
+    firm_name = models.CharField(max_length=100, blank=True, null=True)
+    firm_image = models.ImageField(upload_to='vendor_firm/images/', blank=True, null=True)
+    website_app_link = models.URLField(blank=True, null=True)
+    firm_description = models.TextField(blank=True, null=True)
+    contact_person_name = models.CharField(max_length=100, blank=True, null=True)
+    contact_person_designation = models.CharField(max_length=100, blank=True, null=True)
+    contact_person_mobile = models.CharField(max_length=15, blank=True, null=True)
+    contact_person_email = models.EmailField(blank=True, null=True)
     email = models.EmailField(unique=True)
     mobile = models.CharField(max_length=15)
     address = models.TextField()
@@ -17,6 +26,21 @@ class Vendor(models.Model):
 
     def __str__(self):
         return self.name
+    
+class VendorProductDetails(models.Model):
+    vendor = models.ForeignKey('Vendor', on_delete=models.CASCADE, related_name='vedndor_product_details')
+    product_brand_name = models.CharField(max_length=100)
+    product_name = models.CharField(max_length=100)
+    product_image = models.ImageField(upload_to='vendor_products/images/')
+    size_packing = models.CharField(max_length=50)
+    unit_per_mks = models.CharField(max_length=50)
+    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    minimum_order_quantity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.product_brand_name} - {self.product_name}"
+
+
 
 
 class Tender(models.Model):
