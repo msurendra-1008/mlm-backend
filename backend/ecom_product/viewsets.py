@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.pagination import PageNumberPagination
 from django.db import transaction
-from django.db.models import F, Case, When, Prefetch
+from django.db.models import F, Case, When, Prefetch, Q
 from .models import *
 from .serializers import *
 
@@ -476,6 +476,32 @@ class TransactionViewSet(viewsets.ModelViewSet):
 class VendorViewSet(viewsets.ModelViewSet):
     queryset = Vendor.objects.all().order_by('created_at')
     serializer_class = VendorSerializer
+
+    @action(detail=False, methods=['get'], url_path='search-for-vendor')
+    def search(self, request):
+        query = request.query_params.get('q', '')
+        if query:
+            vendors = Vendor.objects.filter(
+                Q(name__icontains=query) |
+                Q(vendor_code__icontains=query) |
+                Q(firm_name__icontains=query) |
+                Q(website_app_link__icontains=query) |
+                Q(firm_description__icontains=query) |
+                Q(contact_person_name__icontains=query) |
+                Q(contact_person_designation__icontains=query) |
+                Q(contact_person_mobile__icontains=query) |
+                Q(contact_person_email__icontains=query) |
+                Q(email__icontains=query) |
+                Q(mobile__icontains=query) |
+                Q(address__icontains=query) |
+                Q(product__icontains=query) |
+                Q(gst_number__icontains=query) |
+                Q(firm_mode__icontains=query) |
+                Q(other_option_value__icontains=query)
+            ).distinct()
+            serializer = self.get_serializer(vendors, many=True)
+            return Response(serializer.data)
+        return Response({"detail": "No query provided."}, status=400)
 
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
