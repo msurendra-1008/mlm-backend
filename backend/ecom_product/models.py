@@ -6,6 +6,19 @@ from django.utils.translation import gettext_lazy as _
 
 
 class Vendor(models.Model):
+    FIRM_MODE_CHOICES = [
+        ('Manufacturer', 'Manufacturer'),
+        ('Dealer', 'Dealer'),
+        ('Supplier', 'Supplier'),
+        ('Agency', 'Agency'),
+        ('Shopkeeper', 'Shopkeeper'),
+        ('Exporter', 'Exporter'),
+        ('Importer', 'Importer'),
+        ('Contractor', 'Contractor'),
+        ('Farmer', 'Farmer'),
+        ('Other', 'Other'),
+    ]
+
     name = models.CharField(max_length=100)
     vendor_code = models.CharField(max_length=50, unique=True, blank=True, null=True)
     firm_name = models.CharField(max_length=100, blank=True, null=True)
@@ -21,6 +34,8 @@ class Vendor(models.Model):
     address = models.TextField()
     product = models.TextField(blank=True, null=True)
     gst_number = models.CharField(max_length=100, blank=True, null=True)
+    firm_mode = models.CharField(max_length=20, choices=FIRM_MODE_CHOICES, blank=True, null=True)
+    other_option_value = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
 

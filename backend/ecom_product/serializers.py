@@ -29,7 +29,8 @@ class VendorSerializer(serializers.ModelSerializer):
             'id', 'name', 'vendor_code', 'firm_name', 'firm_image', 'website_app_link',
             'firm_description', 'contact_person_name', 'contact_person_designation',
             'contact_person_mobile', 'contact_person_email', 'email', 'mobile',
-            'address', 'product', 'gst_number', 'created_at', 'is_approved'
+            'address', 'product', 'gst_number', 'firm_mode', 'other_option_value',
+            'created_at', 'is_approved'
         ]
 
 class VendorProductDetailsSerializer(serializers.ModelSerializer):
